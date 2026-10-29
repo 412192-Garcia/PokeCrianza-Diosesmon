@@ -1,0 +1,402 @@
+Gallade (M)
+Level: 10
+Shiny: Yes
+Calm Nature
+IVs: 15 HP / 20 Atk / 18 Def / 2 SpA / 31 SpD / 19 Spe
+
+Gastly (M)
+Level: 10
+Timid Nature
+IVs: 15 HP / 17 Atk / 26 Def / 17 SpA / 15 SpD / 31 Spe
+
+Gallade (M)
+Level: 10
+Adamant Nature
+IVs: 12 HP / 23 Atk / 0 Def / 21 SpA / 31 SpD / 24 Spe
+
+Ralts (F)
+Level: 10
+Calm Nature
+IVs: 15 HP / 19 Atk / 31 Def / 23 SpA / 29 SpD / 28 Spe
+
+Abra (F)
+Level: 10
+Jolly Nature
+IVs: 28 HP / 31 Atk / 11 Def / 3 SpA / 1 SpD / 4 Spe
+
+Charmander (F)
+Level: 10
+Adamant Nature
+IVs: 13 HP / 16 Atk / 31 Def / 26 SpA / 12 SpD / 18 Spe
+
+Abra (M)
+Level: 10
+Timid Nature
+IVs: 29 HP / 29 Atk / 0 Def / 27 SpA / 8 SpD / 31 Spe
+
+Machop (M)
+Level: 10
+Calm Nature
+IVs: 20 HP / 31 Atk / 26 Def / 18 SpA / 8 SpD / 9 Spe
+
+Charmander (F)
+Level: 10
+Calm Nature
+IVs: 31 HP / 13 Atk / 28 Def / 4 SpA / 0 SpD / 9 Spe
+
+Kirlia (M)
+Level: 10
+Jolly Nature
+IVs: 31 HP / 12 Atk / 22 Def / 18 SpA / 10 SpD / 17 Spe
+
+Ditto
+Level: 10
+Timid Nature
+IVs: 31 HP / 9 Atk / 0 Def / 2 SpA / 3 SpD / 19 Spe
+
+Abra (F)
+Level: 10
+Timid Nature
+IVs: 22 HP / 31 Atk / 1 Def / 27 SpA / 10 SpD / 10 Spe
+
+Abra (F)
+Level: 10
+Adamant Nature
+IVs: 12 HP / 20 Atk / 27 Def / 19 SpA / 31 SpD / 21 Spe
+
+Ditto
+Level: 10
+Jolly Nature
+IVs: 23 HP / 22 Atk / 7 Def / 29 SpA / 9 SpD / 31 Spe
+
+Ditto
+Level: 10
+Shiny: Yes
+Adamant Nature
+IVs: 0 HP / 25 Atk / 31 Def / 13 SpA / 18 SpD / 10 Spe
+
+Pidgey (M)
+Level: 10
+Jolly Nature
+IVs: 10 HP / 14 Atk / 11 Def / 21 SpA / 29 SpD / 31 Spe
+
+Drifloon (M)
+Level: 10
+Adamant Nature
+IVs: 0 HP / 30 Atk / 11 Def / 8 SpA / 20 SpD / 31 Spe
+
+Pidgey (F)
+Level: 10
+Calm Nature
+IVs: 10 HP / 31 Atk / 24 Def / 11 SpA / 27 SpD / 19 Spe
+
+Kirlia (M)
+Level: 10
+Jolly Nature
+IVs: 23 HP / 4 Atk / 9 Def / 16 SpA / 7 SpD / 31 Spe
+
+Gallade (M)
+Level: 10
+Jolly Nature
+IVs: 20 HP / 22 Atk / 3 Def / 31 SpA / 3 SpD / 19 Spe
+
+Charmander (M)
+Level: 10
+Calm Nature
+IVs: 2 HP / 31 Atk / 10 Def / 23 SpA / 20 SpD / 6 Spe
+
+Gastly (M)
+Level: 10
+Adamant Nature
+IVs: 31 HP / 16 Atk / 30 Def / 6 SpA / 10 SpD / 25 Spe
+
+Gardevoir (F)
+Level: 10
+Jolly Nature
+IVs: 2 HP / 25 Atk / 19 Def / 11 SpA / 18 SpD / 31 Spe
+
+Ditto
+Level: 10
+Calm Nature
+IVs: 14 HP / 11 Atk / 31 Def / 20 SpA / 13 SpD / 9 Spe
+
+Ralts (F)
+Level: 10
+Calm Nature
+IVs: 31 HP / 15 Atk / 30 Def / 26 SpA / 28 SpD / 19 Spe
+
+Ditto
+Level: 10
+Adamant Nature
+IVs: 7 HP / 1 Atk / 23 Def / 14 SpA / 26 SpD / 31 Spe
+
+Gastly (F)
+Level: 10
+Modest Nature
+IVs: 31 HP / 27 Atk / 18 Def / 9 SpA / 3 SpD / 25 Spe
+
+Ditto
+Level: 10
+Adamant Nature
+IVs: 18 HP / 1 Atk / 0 Def / 31 SpA / 15 SpD / 23 Spe
+
+Gastly (M)
+Level: 10
+Jolly Nature
+IVs: 17 HP / 13 Atk / 1 Def / 30 SpA / 31 SpD / 29 Spe
+
+Gardevoir (F)
+Level: 10
+Modest Nature
+IVs: 15 HP / 25 Atk / 25 Def / 1 SpA / 31 SpD / 11 Spe
+
+Ditto
+Level: 10
+Timid Nature
+IVs: 31 HP / 5 Atk / 7 Def / 25 SpA / 8 SpD / 29 Spe
+
+Ralts (F)
+Level: 10
+Adamant Nature
+IVs: 1 HP / 24 Atk / 8 Def / 31 SpA / 7 SpD / 8 Spe
+
+Abra (M)
+Level: 10
+Modest Nature
+IVs: 31 HP / 27 Atk / 1 Def / 24 SpA / 4 SpD / 1 Spe
+
+Drifloon (M)
+Level: 10
+Jolly Nature
+IVs: 31 HP / 16 Atk / 16 Def / 15 SpA / 10 SpD / 5 Spe
+
+Abra (F)
+Level: 10
+Modest Nature
+IVs: 8 HP / 6 Atk / 31 Def / 10 SpA / 13 SpD / 3 Spe
+
+Abra (M)
+Level: 10
+Modest Nature
+IVs: 31 HP / 11 Atk / 14 Def / 19 SpA / 20 SpD / 25 Spe
+
+Pidgey (F)
+Level: 10
+Calm Nature
+IVs: 15 HP / 24 Atk / 22 Def / 10 SpA / 13 SpD / 31 Spe
+
+Drifloon (M)
+Level: 10
+Calm Nature
+IVs: 8 HP / 22 Atk / 18 Def / 2 SpA / 31 SpD / 25 Spe
+
+Gardevoir (F)
+Level: 10
+Modest Nature
+IVs: 28 HP / 17 Atk / 31 Def / 25 SpA / 27 SpD / 8 Spe
+
+Charmander (F)
+Level: 10
+Modest Nature
+IVs: 10 HP / 18 Atk / 17 Def / 3 SpA / 25 SpD / 31 Spe
+
+Drifloon (M)
+Level: 10
+Calm Nature
+IVs: 1 HP / 16 Atk / 2 Def / 31 SpA / 18 SpD / 3 Spe
+
+Gardevoir (F)
+Level: 10
+Jolly Nature
+IVs: 31 HP / 0 Atk / 27 Def / 3 SpA / 21 SpD / 15 Spe
+
+Pidgey (F)
+Level: 10
+Adamant Nature
+IVs: 31 HP / 24 Atk / 18 Def / 16 SpA / 16 SpD / 22 Spe
+
+Kirlia (M)
+Level: 10
+Calm Nature
+IVs: 5 HP / 26 Atk / 2 Def / 7 SpA / 31 SpD / 5 Spe
+
+Pidgey (F)
+Level: 10
+Calm Nature
+IVs: 12 HP / 30 Atk / 11 Def / 17 SpA / 31 SpD / 13 Spe
+
+Ditto
+Level: 10
+Adamant Nature
+IVs: 26 HP / 23 Atk / 30 Def / 31 SpA / 5 SpD / 13 Spe
+
+Charmander (F)
+Level: 10
+Calm Nature
+IVs: 28 HP / 28 Atk / 4 Def / 31 SpA / 5 SpD / 3 Spe
+
+Ditto
+Level: 10
+Timid Nature
+IVs: 23 HP / 27 Atk / 5 Def / 4 SpA / 31 SpD / 8 Spe
+
+Pidgey (F)
+Level: 10
+Calm Nature
+IVs: 17 HP / 30 Atk / 24 Def / 9 SpA / 21 SpD / 31 Spe
+
+Pidgey (F)
+Level: 10
+Adamant Nature
+IVs: 0 HP / 8 Atk / 31 Def / 15 SpA / 25 SpD / 12 Spe
+
+Machop (M)
+Level: 10
+Adamant Nature
+IVs: 13 HP / 31 Atk / 22 Def / 15 SpA / 22 SpD / 19 Spe
+
+Charmander (M)
+Level: 10
+Modest Nature
+IVs: 2 HP / 27 Atk / 30 Def / 12 SpA / 25 SpD / 31 Spe
+
+Drifloon (M)
+Level: 10
+Jolly Nature
+IVs: 22 HP / 24 Atk / 21 Def / 2 SpA / 30 SpD / 31 Spe
+
+Gallade (M)
+Level: 10
+Jolly Nature
+IVs: 5 HP / 31 Atk / 19 Def / 22 SpA / 21 SpD / 27 Spe
+
+Gardevoir (F)
+Level: 10
+Jolly Nature
+IVs: 2 HP / 23 Atk / 25 Def / 31 SpA / 2 SpD / 3 Spe
+
+Ralts (F)
+Level: 10
+Calm Nature
+IVs: 21 HP / 10 Atk / 0 Def / 0 SpA / 10 SpD / 31 Spe
+
+Drifloon (M)
+Level: 10
+Modest Nature
+IVs: 23 HP / 30 Atk / 15 Def / 12 SpA / 31 SpD / 4 Spe
+
+Gastly (M)
+Level: 10
+Jolly Nature
+IVs: 31 HP / 14 Atk / 28 Def / 16 SpA / 29 SpD / 8 Spe
+
+Charmander (F)
+Level: 10
+Jolly Nature
+IVs: 21 HP / 21 Atk / 31 Def / 21 SpA / 20 SpD / 30 Spe
+
+Kirlia (F)
+Level: 10
+Jolly Nature
+IVs: 16 HP / 3 Atk / 21 Def / 15 SpA / 31 SpD / 16 Spe
+
+Charmander (M)
+Level: 10
+Calm Nature
+IVs: 20 HP / 4 Atk / 5 Def / 11 SpA / 28 SpD / 31 Spe
+
+Kirlia (M)
+Level: 10
+Adamant Nature
+IVs: 29 HP / 31 Atk / 10 Def / 20 SpA / 23 SpD / 20 Spe
+
+Gastly (M)
+Level: 10
+Adamant Nature
+IVs: 25 HP / 5 Atk / 31 Def / 22 SpA / 2 SpD / 3 Spe
+
+Ditto
+Level: 10
+Timid Nature
+IVs: 11 HP / 3 Atk / 8 Def / 31 SpA / 8 SpD / 12 Spe
+
+Ralts (F)
+Level: 10
+Calm Nature
+IVs: 22 HP / 31 Atk / 24 Def / 16 SpA / 11 SpD / 28 Spe
+
+Drifloon (M)
+Level: 10
+Modest Nature
+IVs: 31 HP / 4 Atk / 8 Def / 18 SpA / 3 SpD / 21 Spe
+
+Gardevoir (F)
+Level: 10
+Timid Nature
+IVs: 23 HP / 12 Atk / 26 Def / 23 SpA / 4 SpD / 31 Spe
+
+Abra (M)
+Level: 10
+Jolly Nature
+IVs: 18 HP / 31 Atk / 5 Def / 6 SpA / 27 SpD / 8 Spe
+
+Ralts (F)
+Level: 10
+Adamant Nature
+IVs: 10 HP / 17 Atk / 28 Def / 31 SpA / 18 SpD / 9 Spe
+
+Charmander (F)
+Level: 10
+Modest Nature
+IVs: 15 HP / 0 Atk / 19 Def / 6 SpA / 23 SpD / 31 Spe
+
+Charmander (M)
+Level: 10
+Modest Nature
+IVs: 20 HP / 14 Atk / 6 Def / 6 SpA / 31 SpD / 25 Spe
+
+Ditto
+Level: 10
+Timid Nature
+IVs: 3 HP / 18 Atk / 9 Def / 31 SpA / 30 SpD / 21 Spe
+
+Drifloon (M)
+Level: 10
+Adamant Nature
+IVs: 31 HP / 0 Atk / 11 Def / 19 SpA / 7 SpD / 16 Spe
+
+Ralts (F)
+Level: 10
+Modest Nature
+IVs: 22 HP / 22 Atk / 31 Def / 4 SpA / 2 SpD / 27 Spe
+
+Kirlia (F)
+Level: 10
+Timid Nature
+IVs: 29 HP / 31 Atk / 2 Def / 27 SpA / 6 SpD / 13 Spe
+
+Drifloon (F)
+Level: 10
+Calm Nature
+IVs: 31 HP / 13 Atk / 2 Def / 27 SpA / 6 SpD / 22 Spe
+
+Drifloon (M)
+Level: 10
+Calm Nature
+IVs: 6 HP / 20 Atk / 15 Def / 31 SpA / 9 SpD / 0 Spe
+
+Drifloon (M)
+Level: 10
+Jolly Nature
+IVs: 31 HP / 23 Atk / 8 Def / 11 SpA / 27 SpD / 11 Spe
+
+Pidgey (F)
+Level: 10
+Calm Nature
+IVs: 31 HP / 25 Atk / 6 Def / 8 SpA / 25 SpD / 11 Spe
+
+Ditto
+Level: 10
+Modest Nature
+IVs: 0 HP / 31 Atk / 5 Def / 18 SpA / 12 SpD / 16 Spe
+

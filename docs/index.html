@@ -1,0 +1,1074 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PokeCrianza</title>
+<style>
+  :root {
+    --bg: #f4f5f9; --panel: #ffffff; --ink: #1d2030; --muted: #6b7088; --line: #dfe2ec;
+    --accent: #e3350d; --accent-ink: #fff; --soft: #eef0f6; --ok: #2e9d5b; --warn: #c27c0e; --bad: #c8312b;
+    /* Colores estándar de stats: HP verde, Atk rojo, Def naranja, SpA violeta, SpD amarillo, Spe azul */
+    --hp: #6fcf5c; --atk: #f06464; --def: #f5a25a; --spa: #b48cf0; --spd: #f2d45c; --spe: #64a6f5;
+    --macho: #3a7bd5; --hembra: #e0457b;
+    --off: #d9dce6; --eterna: #8a8fa8; --shadow: 0 1px 2px rgba(20,25,45,.06), 0 4px 14px rgba(20,25,45,.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #14161f; --panel: #1d202c; --ink: #e8eaf2; --muted: #9196ad; --line: #2e3242;
+      --soft: #262a38; --off: #3a3f52; --shadow: 0 1px 2px rgba(0,0,0,.3); }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  header { display: flex; align-items: center; gap: 12px; padding: 14px 24px; background: var(--panel);
+    border-bottom: 1px solid var(--line); }
+  header .ball { width: 26px; height: 26px; border-radius: 50%; border: 3px solid var(--ink);
+    background: linear-gradient(var(--accent) 0 45%, var(--ink) 45% 55%, #fff 55%); }
+  header h1 { font-size: 19px; margin: 0; }
+  header span { color: var(--muted); font-size: 13px; }
+  main { display: grid; grid-template-columns: 340px 1fr; gap: 20px; padding: 20px 24px; align-items: start; }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; padding: 16px; } }
+  /* Menú: botón hamburguesa fijo arriba a la izquierda, por encima de la página (no ocupa lugar). */
+  /* El menú se queda fijo al bajar y tiene su propio scroll (no arrastra la página). */
+  .lateral { position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow-y: auto; overscroll-behavior: contain;
+    scrollbar-width: thin; scrollbar-gutter: stable; border-radius: 14px; }
+  @media (max-width: 900px) { .lateral { position: static; max-height: none; overflow: visible; } }
+  header { padding-left: 70px; }
+  #plegar { position: fixed; top: 10px; left: 16px; z-index: 20; width: 40px; height: 40px; padding: 0;
+    display: flex; align-items: center; justify-content: center; color: var(--ink);
+    background: var(--panel); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); }
+  #plegar:hover { border-color: var(--muted); }
+  body.colapsado main { grid-template-columns: 1fr; }
+  body.colapsado .lateral { display: none; }
+  #resultado, #columna { min-width: 0; }
+  /* Pestañas: varios árboles guardados a la vez. */
+  #pestanas { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+  .pestana { display: flex; align-items: center; gap: 6px; padding: 6px 6px 6px 10px; border-radius: 10px; cursor: pointer;
+    background: var(--panel); border: 1px solid var(--line); color: var(--muted); font-size: 13px; font-weight: 600; }
+  .pestana:hover { border-color: var(--muted); }
+  .pestana.activa { color: var(--ink); border-color: var(--accent, var(--ink)); box-shadow: var(--shadow); }
+  .pestana img { width: 28px; height: 28px; margin: -4px -2px; image-rendering: pixelated; }
+  .pestana .avance { font-size: 11px; font-weight: 700; color: var(--muted); }
+  .pestana .avance.listo { color: var(--ok); }
+  .pestana .cerrar { border: 0; background: transparent; color: var(--muted); padding: 0 4px; font-size: 16px; line-height: 1;
+    cursor: pointer; border-radius: 6px; }
+  .pestana .cerrar:hover { color: var(--bad); background: var(--soft); }
+  .pestana.nueva { padding: 6px 12px; border-style: dashed; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px; box-shadow: var(--shadow); }
+  form.panel { position: relative; }
+  label.campo { display: block; font-weight: 600; font-size: 13px; margin: 14px 0 6px; }
+  label.campo:first-child { margin-top: 0; }
+  .ayuda { color: var(--muted); font-weight: 400; font-size: 12px; }
+  input[type=text], input[type=number], select, textarea {
+    width: 100%; padding: 9px 11px; border: 1px solid var(--line); border-radius: 9px; font: inherit;
+    background: var(--panel); color: var(--ink); }
+  input:focus, select:focus, textarea:focus { outline: 2px solid var(--spa); outline-offset: 1px; }
+  .archivo { display: flex; align-items: center; gap: 10px; padding: 10px; border: 1.5px dashed var(--line);
+    border-radius: 10px; background: var(--soft); }
+  .archivo.arrastrando { border-color: var(--accent); }
+  .archivo button { flex: none; }
+  .archivo .nombre { font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  details summary { cursor: pointer; color: var(--muted); font-size: 12px; margin-top: 6px; }
+  textarea { height: 140px; margin-top: 6px; font: 12px/1.4 ui-monospace, Consolas, monospace; }
+  .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  select.iv { width: 100%; min-width: 0; padding: 7px 6px; font-size: 13px; font-weight: 700;
+    border-left: 5px solid var(--c); cursor: pointer; }
+  select.iv.v31 { background: var(--c); color: #1d2030; border-color: var(--c); }
+  select.iv.v0 { background: #1d2030; color: #fff; border-color: var(--c); }
+  select.iv option { background: var(--panel); color: var(--ink); }
+  .fila { display: flex; gap: 10px; align-items: center; }
+  .check { display: flex; gap: 8px; align-items: center; font-size: 13px; margin-top: 10px; cursor: pointer; }
+  button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--ink);
+    padding: 8px 14px; border-radius: 9px; cursor: pointer; }
+  button.primario { width: 100%; margin-top: 18px; background: var(--accent); color: var(--accent-ink);
+    border-color: var(--accent); font-weight: 700; padding: 11px; }
+  button:disabled { opacity: .6; cursor: progress; }
+  .vacio { text-align: center; color: var(--muted); padding: 60px 20px; }
+  .error { border-color: var(--bad); color: var(--bad); }
+  .resumen { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .kpi { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+  .kpi b { display: block; font-size: 24px; }
+  .kpi span { color: var(--muted); font-size: 12px; }
+  h2 { font-size: 16px; margin: 0 0 12px; }
+  section + section { margin-top: 16px; }
+  .ivs { display: inline-flex; gap: 2px; vertical-align: middle; }
+  .ivs i { width: 14px; height: 8px; border-radius: 2px; background: var(--off); }
+  .ivs i.z { background: #1d2030; box-shadow: inset 0 0 0 1.5px var(--c); }
+  .tag { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 600; padding: 2px 8px;
+    border-radius: 999px; color: #1d2030; white-space: nowrap; }
+  .leyenda { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+  /* Árbol: de izquierda (Pokémon del PC) a derecha (objetivo) */
+  .lienzo { position: relative; overflow: auto; padding: 8px 4px 12px; }
+  .lienzo > svg.conexiones { position: absolute; left: 0; top: 0; pointer-events: none; overflow: visible; }
+  .sub { display: flex; align-items: center; }
+  .padres { display: flex; flex-direction: column; gap: 10px; margin-right: 56px; }
+  .carta { position: relative; z-index: 1; width: 214px; background: var(--panel); border: 1.5px solid var(--line);
+    border-radius: 12px; padding: 8px 10px; box-shadow: var(--shadow); transition: opacity .2s; }
+  /* Borde según género: azul macho, rosa hembra, gris sin género / a elegir */
+  .carta { border-width: 2.5px; }
+  .carta.g-M { border-color: var(--macho); background: color-mix(in srgb, var(--macho) 7%, var(--panel)); }
+  .carta.g-F { border-color: var(--hembra); background: color-mix(in srgb, var(--hembra) 7%, var(--panel)); }
+  .carta.pc { border-style: dashed; }
+  .carta.objetivo { border-color: var(--accent); border-width: 2.5px; }
+  /* Ya se usó (sus padres se consumieron en un paso hecho): oscuro. Ya nació: borde verde. */
+  .carta.usado { filter: grayscale(.9) brightness(.55); opacity: .6; }
+  .carta.nacido { box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok) 55%, transparent); }
+  .carta .copiar-cria { position: absolute; top: 5px; right: 6px; border: 0; background: transparent; padding: 2px 4px;
+    font-size: 13px; opacity: .45; cursor: copy; }
+  .carta .copiar-cria:hover { opacity: 1; }
+  .carta.resaltada { outline: 3px solid var(--spa); }
+  .carta .cab { display: flex; align-items: center; gap: 6px; }
+  .carta img { width: 40px; height: 40px; image-rendering: pixelated; margin: -6px -2px -6px -6px; }
+  .carta .nom { font-weight: 700; font-size: 14px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .carta .gen { font-weight: 700; }
+  .gen.M { color: var(--macho); } .gen.F { color: var(--hembra); }
+  .gen-txt { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+  .carta .meta { font-size: 11.5px; color: var(--muted); margin-top: 3px; display: flex; justify-content: space-between; gap: 6px; }
+  .carta .lleva { margin-top: 6px; }
+  .rol { font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+  .paso-chip { font-size: 11px; font-weight: 700; background: var(--soft); border-radius: 6px; padding: 1px 6px; }
+  /* Pasos: cada cruce es una fila  [madre] ✕ [padre] ➜ [cría] */
+  ol.pasos { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+  ol.pasos li.paso { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px 12px; cursor: pointer;
+    transition: opacity .2s, border-color .2s; }
+  ol.pasos li.paso:hover { border-color: var(--muted); }
+  ol.pasos li.paso.hecho { opacity: .45; border-color: var(--ok); }
+  .paso-cab { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .paso-cab input { width: 20px; height: 20px; accent-color: var(--ok); margin: 0; cursor: pointer; }
+  .paso-num { font-weight: 800; font-size: 15px; }
+  .paso-cab .estado { margin-left: auto; font-size: 12px; color: var(--muted); }
+  li.paso.hecho .estado { color: var(--ok); font-weight: 700; }
+  .cruce { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 8px; }
+  .cruce .op { font-size: 20px; font-weight: 800; color: var(--muted); text-align: center; }
+  .mini { position: relative; height: 100%; border: 2.5px solid var(--line); border-radius: 11px; padding: 7px 9px;
+    display: flex; flex-direction: column; gap: 4px; background: var(--panel); }
+  .mini.pc { border-style: dashed; }
+  .mini.g-M { border-color: var(--macho); background: color-mix(in srgb, var(--macho) 7%, var(--panel)); }
+  .mini.g-F { border-color: var(--hembra); background: color-mix(in srgb, var(--hembra) 7%, var(--panel)); }
+  .mini.cria { box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok) 25%, transparent); }
+  .mini .cab { display: flex; align-items: center; gap: 6px; }
+  .mini img { width: 40px; height: 40px; image-rendering: pixelated; margin: -6px -2px -6px -6px; }
+  .mini .nom { font-weight: 700; font-size: 14px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mini .donde { font-size: 11.5px; color: var(--muted); }
+  .mini .ivlinea { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; font-size: 11.5px; color: var(--muted); }
+  .elegi { display: inline-block; line-height: 1.35; align-self: flex-start; font-size: 11.5px; font-weight: 800; padding: 2px 8px; border-radius: 999px; color: #fff; background: var(--muted); }
+  .elegi.M { background: var(--macho); } .elegi.F { background: var(--hembra); }
+  @media (max-width: 760px) {
+    .cruce { grid-template-columns: 1fr; }
+    .cruce .op { transform: rotate(90deg); line-height: 1; }
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  td, th { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-weight: 600; font-size: 12px; }
+  .ok { color: var(--ok); } .imposible { color: var(--bad); } .limite { color: var(--warn); }
+  .mejor { font-weight: 700; }
+  .maquinas { display: flex; align-items: center; gap: 10px; }
+  .maquinas input { width: 90px; text-align: center; }
+  ol.pasos li.ronda { display: flex; align-items: baseline; gap: 10px; cursor: default; margin-top: 6px; padding: 7px 12px;
+    border-radius: 9px; background: var(--soft); font-weight: 800; font-size: 14px; }
+  ol.pasos li.ronda:first-child { margin-top: 0; }
+  ol.pasos li.ronda .ayuda { font-weight: 400; }
+  ol.pasos li.ronda { align-items: center; flex-wrap: wrap; cursor: pointer; user-select: none; }
+  ol.pasos li.ronda:hover { background: color-mix(in srgb, var(--soft) 70%, var(--line)); }
+  .flecha { display: inline-block; width: 14px; color: var(--muted); transition: transform .15s; }
+  li.ronda.cerrada .flecha { transform: rotate(-90deg); }
+  li.ronda.completa { color: var(--ok); }
+  ol.pasos li.paso.oculto, ol.pasos li.sin-cruces.oculto { display: none; }
+  .libres { margin-left: auto; display: flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 400; }
+  .libres input { width: 58px; padding: 4px 6px; text-align: center; font-weight: 700; }
+  .libres.cambiada input { border-color: var(--warn); }
+  li.ronda.vacia + li.ronda, li.ronda.vacia:last-child { margin-top: 6px; }
+  .sin-cruces { padding: 4px 12px 8px; font-size: 12.5px; color: var(--muted); list-style: none; }
+  .dinero { font-size: 12px; font-weight: 800; color: var(--ok); background: color-mix(in srgb, var(--ok) 14%, transparent);
+    border-radius: 6px; padding: 1px 7px; }
+  .maq-chip { font-size: 11px; font-weight: 700; color: var(--accent-ink); background: var(--accent); border-radius: 6px;
+    padding: 1px 6px; margin-right: 4px; }
+  .copiable { cursor: copy; }
+  .carta.copiable:hover, .mini.copiable:hover { outline: 2px solid var(--spa); outline-offset: 2px; }
+  .copiar-hint { font-size: 11px; color: var(--muted); }
+  button.copiar { padding: 3px 9px; font-size: 12px; }
+  /* Exportar el árbol como imagen: mientras se captura, el árbol se muestra entero (sin scroll). */
+  .titulo-arbol { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .titulo-arbol h2 { margin: 0; flex: 1; }
+  .titulo-arbol button { display: flex; align-items: center; gap: 6px; padding: 5px 10px; font-size: 12px; }
+  .solo-imagen { display: none; font-size: 13px; color: var(--muted); margin: -6px 0 10px; }
+  section.exportando { width: max-content; min-width: 100%; }
+  .vista-imagen { position: fixed; inset: 0; z-index: 30; background: rgba(0,0,0,.75); overflow: auto; padding: 16px;
+    display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .vista-barra { position: sticky; top: 0; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    background: var(--panel); color: var(--ink); border-radius: 10px; padding: 8px 12px; box-shadow: var(--shadow); }
+  .vista-barra .boton { display: flex; align-items: center; gap: 6px; padding: 5px 10px; font-size: 12px; color: var(--ink);
+    border: 1px solid var(--line); border-radius: 8px; text-decoration: none; }
+  .vista-imagen img { max-width: 100%; height: auto; border-radius: 10px; }
+  .vista-error { color: #ccc; font-size: 11px; }
+  section.exportando .lienzo { overflow: visible; }
+  section.exportando .solo-imagen { display: block; }
+  section.exportando :is(.titulo-arbol button, .ayuda-arbol, .vetar, .copiar-cria, .copiar-hint) { display: none; }
+  #aviso { position: fixed; left: 50%; bottom: 22px; transform: translate(-50%, 20px); opacity: 0; pointer-events: none;
+    max-width: min(640px, calc(100vw - 32px)); background: var(--ink); color: var(--bg); padding: 10px 14px; border-radius: 10px;
+    font-size: 13px; box-shadow: 0 6px 24px rgba(0,0,0,.25); transition: opacity .2s, transform .2s; z-index: 10; }
+  #aviso.visible { opacity: 1; transform: translate(-50%, 0); }
+  #aviso code { font: 12px ui-monospace, Consolas, monospace; word-break: break-all; }
+  .ronda-objs { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+  .ronda-objs .tag { font-size: 10.5px; padding: 1px 6px; }
+  .faltan { text-align: left; max-width: 640px; margin: 14px auto 0; padding-left: 18px; color: var(--ink); }
+  .faltan li { margin: 6px 0; }
+  /* Bloqueados */
+  details.desplegable { margin-top: 6px; }
+  details.desplegable > summary { list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    margin: 0; padding: 9px 11px; border: 1px solid var(--line); border-radius: 9px; color: var(--ink); font-size: 14px; }
+  details.desplegable > summary::-webkit-details-marker { display: none; }
+  details.desplegable > summary::after { content: "▾"; color: var(--muted); transition: transform .15s; }
+  details.desplegable[open] > summary::after { transform: rotate(180deg); }
+  details.desplegable[open] > summary { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+  .desplegable-cuerpo { border: 1px solid var(--line); border-top: 0; border-radius: 0 0 9px 9px; padding: 8px; }
+  .desplegable-cuerpo .acciones { display: flex; justify-content: flex-end; margin-top: 6px; }
+  .desplegable-cuerpo .acciones button { padding: 3px 10px; font-size: 12px; }
+  .lista-pc { max-height: 260px; overflow: auto; margin-top: 6px; border: 1px solid var(--line); border-radius: 9px; }
+  .lista-pc:empty::after { content: "Cargá el archivo para ver tu PC"; display: block; padding: 14px; color: var(--muted); font-size: 12px; text-align: center; }
+  .fila-pc { display: flex; align-items: center; gap: 6px; padding: 4px 8px; font-size: 12.5px; cursor: pointer;
+    border-bottom: 1px solid var(--line); user-select: none; }
+  .fila-pc:last-child { border-bottom: 0; }
+  .fila-pc.g-M { box-shadow: inset 3px 0 var(--macho); } .fila-pc.g-F { box-shadow: inset 3px 0 var(--hembra); }
+  .fila-pc:hover { background: var(--soft); }
+  .fila-pc img { width: 28px; height: 28px; image-rendering: pixelated; margin: -4px 0; }
+  .fila-pc .nom { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .fila-pc .ban { width: 20px; display: flex; justify-content: center; color: var(--muted); opacity: .45; }
+  .icono-ban { display: inline-block; vertical-align: -3px; }
+  .fila-pc.vetado { background: color-mix(in srgb, var(--bad) 12%, transparent); }
+  .fila-pc.vetado .nom { text-decoration: line-through; color: var(--muted); }
+  .fila-pc.vetado .ban { opacity: 1; color: var(--bad); }
+  .buscar { padding: 7px 10px !important; font-size: 13px !important; }
+  .carta .vetar { position: absolute; top: 5px; right: 6px; border: 0; background: transparent; padding: 2px 4px;
+    font-size: 13px; opacity: .35; cursor: pointer; }
+  .carta .vetar { color: var(--muted); display: flex; }
+  .carta .copiar-cria { color: var(--muted); display: flex; }
+  .icono-copiar { vertical-align: -2px; flex: none; }
+  .carta .vetar:hover { opacity: 1; color: var(--bad); }
+  .carta.pc .rol { padding-right: 22px; }
+  .cargando { display: inline-block; width: 14px; height: 14px; border: 2px solid currentColor; border-right-color: transparent;
+    border-radius: 50%; animation: g .7s linear infinite; vertical-align: -2px; margin-right: 6px; }
+  @keyframes g { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<button type="button" id="plegar" aria-controls="form" aria-expanded="true" title="Ocultar menú">
+  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"
+    aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+</button>
+<header>
+  <div class="ball" aria-hidden="true"></div>
+  <h1>PokeCrianza</h1>
+  <span>Generador de árboles de crianza · PokeMMO / Cobblemon</span>
+</header>
+
+<main>
+  <aside class="lateral">
+  <form class="panel" id="form">
+    <label class="campo">1. Archivo del PC <span class="ayuda">(.txt exportado del mod)</span></label>
+    <div class="archivo" id="zona">
+      <button type="button" id="elegir">Elegir archivo</button>
+      <span class="nombre" id="nombreArchivo">o arrastralo acá</span>
+      <input type="file" id="archivo" accept=".txt,text/plain" hidden>
+    </div>
+    <details id="pegar">
+      <summary>…o pegá el texto</summary>
+      <textarea id="texto" placeholder="Charmander (M)&#10;Jolly Nature&#10;IVs: 3 HP / 16 Atk / ..."></textarea>
+    </details>
+
+    <label class="campo" for="objetivo">2. Pokémon objetivo</label>
+    <input type="text" id="objetivo" list="especies" placeholder="Ej: Gardevoir" autocomplete="off" required>
+    <datalist id="especies"></datalist>
+
+    <label class="campo">3. IVs que querés <span class="ayuda">(— = da igual)</span></label>
+    <div class="stats" id="stats"></div>
+
+    <label class="campo" for="naturaleza">4. Naturaleza <span class="ayuda">(opcional, usa Piedra Eterna)</span></label>
+    <select id="naturaleza"><option value="">Cualquiera</option></select>
+
+    <label class="campo">5. Pokémon que no querés usar</label>
+    <details class="desplegable" id="bloqDesp">
+      <summary><span id="cuentaBloq">Ninguno bloqueado</span></summary>
+      <div class="desplegable-cuerpo">
+        <input type="text" id="buscarPc" class="buscar" placeholder="Buscar especie…" autocomplete="off">
+        <div class="lista-pc" id="listaPc"></div>
+        <div class="acciones"><button type="button" id="desbloquear" hidden>Desbloquear todos</button></div>
+      </div>
+    </details>
+
+    <label class="campo" for="maquinas">6. Máquinas de crianza en simultáneo</label>
+    <div class="maquinas">
+      <input type="number" id="maquinas" min="1" max="30" value="1">
+      <span class="ayuda">Los pasos se agrupan en rondas: en cada ronda usás todas las máquinas a la vez.</span>
+    </div>
+
+    <label class="check"><input type="checkbox" id="ditto" checked> Usar Dittos del PC</label>
+
+    <label class="campo" for="prioridad">7. Prioridad</label>
+    <select id="prioridad">
+      <option value="4">Menos cruces</option>
+      <option value="2">Equilibrado</option>
+      <option value="1">Cuidar mis Pokémon</option>
+    </select>
+    <span class="ayuda">Menos cruces: gasta Pokémon con más 31 si así se ahorra cruces (pero no tus 4x31 o mejores por un solo cruce).
+      Cuidar mis Pokémon: da más vueltas para no gastar los buenos.</span>
+
+    <label class="campo" for="tiempo">8. Tiempo de búsqueda</label>
+    <select id="tiempo">
+      <option value="30">Rápida (~30 s)</option>
+      <option value="120">Profunda (~2 min)</option>
+      <option value="240">Súper (~4 min)</option>
+    </select>
+    <span class="ayuda">Con 5-6 IVs, más tiempo encuentra rutas más baratas. Si el resultado dice "la ruta más barata", no hace falta más.</span>
+
+    <button class="primario" id="calcular">Calcular árbol</button>
+  </form>
+  </aside>
+
+  <div id="columna">
+    <div id="pestanas" role="tablist" aria-label="Árboles guardados"></div>
+    <div id="resultado"></div>
+  </div>
+</main>
+
+<script>
+const STATS = ["HP", "Atk", "Def", "SpA", "SpD", "Spe"];
+const COLOR = ["--hp", "--atk", "--def", "--spa", "--spd", "--spe"].map(v => `var(${v})`);
+const RECIO = ["Pesa Recia", "Brazal Recio", "Cinto Recio", "Lente Recia", "Banda Recia", "Franja Recia"];
+const NATURALEZAS = ["Adamant","Bashful","Bold","Brave","Calm","Careful","Docile","Gentle","Hardy","Hasty","Impish","Jolly",
+  "Lax","Lonely","Mild","Modest","Naive","Naughty","Quiet","Quirky","Rash","Relaxed","Sassy","Serious","Timid"];
+const $ = id => document.getElementById(id);
+// El motor (el cálculo) corre en segundo plano dentro del navegador: no hace falta servidor.
+const motor = import("./motor/cliente.js");
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const guardar = (k, v) => { try { localStorage.setItem("pc_" + k, JSON.stringify(v)); } catch {} };
+const leer = (k, d) => { try { const v = localStorage.getItem("pc_" + k); return v === null ? d : JSON.parse(v); } catch { return d; } };
+
+// ---------- menú colapsable ----------
+function plegar(colapsar) {
+  document.body.classList.toggle("colapsado", colapsar);
+  $("plegar").title = colapsar ? "Mostrar menú" : "Ocultar menú";
+  $("plegar").setAttribute("aria-expanded", String(!colapsar));
+  guardar("colapsado", colapsar);
+}
+$("plegar").onclick = () => plegar(!document.body.classList.contains("colapsado"));
+plegar(leer("colapsado", false));
+
+// ---------- formulario ----------
+$("naturaleza").insertAdjacentHTML("beforeend", NATURALEZAS.map(n => `<option>${n}</option>`).join(""));
+// Un selector por stat: da igual / 31 / 0. Se pinta con el color del stat (lleno = 31, oscuro = 0).
+$("stats").innerHTML = STATS.map((s, i) =>
+  `<select class="iv" data-stat="${s}" style="--c:${COLOR[i]}" aria-label="IV de ${s}">
+    <option value="">${s} · —</option><option value="31">${s} · 31</option><option value="0">${s} · 0</option></select>`).join("");
+const pintarIv = sel => { sel.classList.toggle("v31", sel.value === "31"); sel.classList.toggle("v0", sel.value === "0"); };
+$("stats").onchange = e => pintarIv(e.target);
+const elegidos = v => [...$("stats").querySelectorAll("select.iv")].filter(x => x.value === v).map(x => x.dataset.stat);
+motor.then(m => m.especies()).then(l => {
+  $("especies").innerHTML = l.map(n => `<option value="${esc(n)}">`).join("");
+});
+
+$("elegir").onclick = () => $("archivo").click();
+$("archivo").onchange = e => cargarArchivo(e.target.files[0]);
+const zona = $("zona");
+zona.ondragover = e => { e.preventDefault(); zona.classList.add("arrastrando"); };
+zona.ondragleave = () => zona.classList.remove("arrastrando");
+zona.ondrop = e => { e.preventDefault(); zona.classList.remove("arrastrando"); cargarArchivo(e.dataTransfer.files[0]); };
+
+function cargarArchivo(f) {
+  if (!f) return;
+  f.text().then(t => {
+    $("texto").value = t;
+    $("nombreArchivo").textContent = `${f.name} · ${t.split(/\n\s*\n/).filter(b => b.trim()).length} bloques`;
+    guardar("texto", t); guardar("archivo", f.name);
+    cargarInventario();
+  });
+}
+
+// ---------- Pokémon bloqueados ----------
+let pcInventario = [];
+const bloqueados = new Set(leer("bloqueados", []));
+const guardarBloqueados = () => guardar("bloqueados", [...bloqueados]);
+
+function pintarLista() {
+  const q = $("buscarPc").value.trim().toLowerCase();
+  const filas = pcInventario
+    .filter(p => !q || p.especie.toLowerCase().includes(q))
+    .sort((a, b) => bloqueados.has(b.clave) - bloqueados.has(a.clave) || a.uid - b.uid);
+  $("listaPc").innerHTML = filas.map(p => `<div class="fila-pc ${bloqueados.has(p.clave) ? "vetado" : ""} ${p.genero ? "g-" + p.genero : ""}" data-clave="${esc(p.clave)}"
+      title="${bloqueados.has(p.clave) ? "Bloqueado: tocá para volver a usarlo" : "Tocá para no usarlo"}">
+      <span class="ban">${ICONO_BAN}</span>${p.num > 0 ? `<img src="${SPRITES}${p.num}.png" alt="" onerror="this.remove()">` : ""}
+      <span class="nom">${esc(p.especie)} ${genero(p.genero)} <span class="ayuda">${esc(p.naturaleza || "")}</span></span>
+      ${ivsBar(p.ivs, p.ceros)}</div>`).join("");
+  const n = pcInventario.filter(p => bloqueados.has(p.clave)).length;
+  $("cuentaBloq").textContent = n ? `${n} bloqueado${n > 1 ? "s" : ""}` : "Ninguno bloqueado";
+  $("desbloquear").hidden = !n;
+}
+
+async function cargarInventario() {
+  const texto = $("texto").value;
+  if (!texto.trim()) { pcInventario = []; return pintarLista(); }
+  try {
+    pcInventario = await (await motor).inventario(texto);
+  } catch { pcInventario = []; }
+  pintarLista();
+}
+
+$("buscarPc").oninput = pintarLista;
+$("listaPc").onclick = e => {
+  const fila = e.target.closest(".fila-pc"); if (!fila) return;
+  const k = fila.dataset.clave;
+  bloqueados.has(k) ? bloqueados.delete(k) : bloqueados.add(k);
+  guardarBloqueados(); pintarLista();
+};
+$("desbloquear").onclick = () => {
+  for (const p of pcInventario) bloqueados.delete(p.clave);
+  guardarBloqueados(); pintarLista();
+};
+
+// restaurar lo último que usaste
+$("texto").value = leer("texto", "");
+if ($("texto").value) $("nombreArchivo").textContent = leer("archivo", "texto guardado") + " (último usado)";
+$("objetivo").value = leer("objetivo", "");
+$("naturaleza").value = leer("naturaleza", "");
+$("maquinas").value = leer("maquinas", 1);
+$("tiempo").value = String(leer("tiempo", 30));
+$("prioridad").value = String(leer("prioridad", 4));
+// ---------- varios árboles (pestañas) ----------
+// Cada árbol guarda su resultado tal cual (no se recalcula al volver: el PC cambia a medida que criás)
+// y los campos del pedido, que se restauran al elegirlo. El avance de cada uno ya se guarda por ruta.
+let arboles = leer("arboles", []), activo = leer("arbolActivo", null);
+if (!arboles.length) arboles = [{ id: Date.now(), datos: null, pedido: null }];
+if (!arboles.some(a => a.id === activo)) activo = arboles[0].id;
+const arbolActivo = () => arboles.find(a => a.id === activo);
+const calculando = new Set();  // pestañas con un cálculo en curso
+function guardarArboles() {
+  guardar("arboles", arboles); guardar("arbolActivo", activo);
+}
+const claveHechos = d => "hechos_" + JSON.stringify([d.especie, d.plan.ivs, d.plan.ceros, d.naturaleza, d.plan.consumidos.map(c => c.uid)]);
+function pintarPestanas() {
+  $("pestanas").innerHTML = arboles.map((a, i) => {
+    const d = a.datos;
+    let titulo = "Árbol nuevo", avance = "", spr = "";
+    if (calculando.has(a.id)) avance = `<span class="cargando"></span>`;
+    if (d) {
+      titulo = `${esc(d.especie)} ${d.plan ? `${d.plan.ivs.length}x31${d.plan.ceros.length ? `+${d.plan.ceros.length}x0` : ""}` : "· sin ruta"}`;
+      spr = d.plan ? sprite(d.plan.arbol.num) : "";
+      if (d.plan) {
+        const hechos = leer(claveHechos(d), []).length, total = d.plan.pasos.length;
+        avance = `<span class="avance${hechos === total ? " listo" : ""}">${hechos === total ? "✓" : `${hechos}/${total}`}</span>`;
+      }
+    }
+    return `<div class="pestana${a.id === activo ? " activa" : ""}" role="tab" aria-selected="${a.id === activo}" data-id="${a.id}"
+      title="${d ? "Ver este árbol" : "Árbol vacío: calculá uno"}">${spr}<span>${titulo}</span>${avance}${
+      arboles.length > 1 ? `<button type="button" class="cerrar" data-cerrar="${a.id}" title="Cerrar este árbol" aria-label="Cerrar árbol">×</button>` : ""}</div>`;
+  }).join("") + `<button type="button" class="pestana nueva" id="nuevoArbol" title="Empezar otro árbol sin perder este">+ Nuevo árbol</button>`;
+}
+function restaurarPedido(pd) {
+  if (!pd) return;
+  $("objetivo").value = pd.objetivo || "";
+  $("naturaleza").value = pd.naturaleza || "";
+  $("ditto").checked = pd.usarDitto !== false;
+  if (pd.segundos) $("tiempo").value = String(pd.segundos);
+  if (pd.pesoCruce) $("prioridad").value = String(pd.pesoCruce);
+  for (const sel of $("stats").querySelectorAll("select.iv")) {
+    sel.value = pd.stats.includes(sel.dataset.stat) ? "31" : pd.ceros.includes(sel.dataset.stat) ? "0" : "";
+    pintarIv(sel);
+  }
+}
+function abrirArbol(id) {
+  activo = id; guardarArboles();
+  const a = arbolActivo();
+  restaurarPedido(a.pedido);
+  pintarPestanas();
+  if (a.datos) mostrar(a.datos);
+  else {
+    ultimo = null;
+    $("resultado").innerHTML = calculando.has(id) ? `<div class="panel vacio"><span class="cargando"></span>Calculando este árbol…</div>`
+      : `<div class="panel vacio">Cargá tu PC, escribí el Pokémon que querés y tocá <b>Calcular árbol</b>.${
+      arboles.length > 1 ? "<br>Tus otros árboles siguen guardados en las pestañas de arriba." : ""}</div>`;
+  }
+}
+$("pestanas").onclick = e => {
+  const x = e.target.closest("[data-cerrar]");
+  if (x) {
+    const id = +x.dataset.cerrar, a = arboles.find(t => t.id === id);
+    const pendiente = a.datos?.plan && leer(claveHechos(a.datos), []).length < a.datos.plan.pasos.length;
+    if (pendiente && !confirm(`¿Cerrar el árbol de ${a.datos.especie}? Todavía tiene pasos sin hacer.`)) return;
+    const i = arboles.indexOf(a);
+    arboles.splice(i, 1);
+    if (activo === id) activo = arboles[Math.max(0, i - 1)].id;
+    guardarArboles();
+    return abrirArbol(activo);
+  }
+  if (e.target.closest("#nuevoArbol")) {
+    const vacio = arboles.find(a => !a.datos);
+    if (vacio) return abrirArbol(vacio.id);
+    arboles.push({ id: Date.now(), datos: null, pedido: null });
+    guardarArboles();
+    return abrirArbol(arboles.at(-1).id);
+  }
+  const t = e.target.closest(".pestana[data-id]");
+  if (t && +t.dataset.id !== activo) { abrirArbol(+t.dataset.id); window.scrollTo({ top: 0 }); }
+};
+
+let ultimo = null, maqActual = 1;  // último resultado, para reordenar al cambiar las máquinas sin recalcular
+$("maquinas").oninput = () => {
+  const n = cantidadMaquinas();
+  guardar("maquinas", n);
+  if (ultimo) mostrar(ultimo);
+};
+for (const sel of $("stats").querySelectorAll("select.iv")) {
+  sel.value = leer("stats", []).includes(sel.dataset.stat) ? "31" : leer("ceros", []).includes(sel.dataset.stat) ? "0" : "";
+  pintarIv(sel);
+}
+let esperaTexto;
+$("texto").oninput = () => {
+  guardar("texto", $("texto").value);
+  clearTimeout(esperaTexto); esperaTexto = setTimeout(cargarInventario, 500);
+};
+
+$("form").onsubmit = async e => {
+  e.preventDefault();
+  const texto = $("texto").value;
+  if (!texto.trim()) return mostrarError("Primero cargá el archivo del PC.");
+  const stats = elegidos("31"), ceros = elegidos("0");
+  if (!stats.length && !ceros.length) return mostrarError("Marcá al menos un IV que quieras en 31 o en 0.");
+  const pedido = {
+    texto, objetivo: $("objetivo").value, naturaleza: $("naturaleza").value,
+    stats, ceros, cantidad: null,
+    usarDitto: $("ditto").checked,
+    segundos: +$("tiempo").value,
+    pesoCruce: +$("prioridad").value,
+    bloqueados: pcInventario.filter(p => bloqueados.has(p.clave)).map(p => p.clave),
+    // Pokémon que ya consumen los otros árboles abiertos: este no los toca.
+    reservados: arboles.filter(a => a.id !== activo && a.datos?.plan).flatMap(a => a.datos.plan.consumidos.map(c => c.clave)),
+  };
+  guardar("objetivo", pedido.objetivo);
+  guardar("naturaleza", pedido.naturaleza); guardar("stats", stats); guardar("ceros", ceros); guardar("tiempo", pedido.segundos); guardar("prioridad", pedido.pesoCruce);
+
+  // El resultado va a la pestaña donde se tocó "Calcular", aunque mientras tanto se cambie de pestaña.
+  const destino = arbolActivo();
+  const btn = $("calcular");
+  btn.disabled = true;
+  // Cuenta del tiempo de búsqueda elegido (puede terminar antes si encuentra la ruta más barata).
+  const inicio = Date.now(), mmss = t => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
+  const reloj = () => btn.innerHTML = `<span class="cargando"></span>Calculando… ${mmss((Date.now() - inicio) / 1000)} / ${mmss(pedido.segundos)}`;
+  reloj(); const relojId = setInterval(reloj, 1000);
+  calculando.add(destino.id); pintarPestanas();
+  const mostrarSiSigue = f => { if (activo === destino.id) f(); };
+  try {
+    const datos = await (await motor).planificar(pedido);
+    if (!arboles.includes(destino)) return;  // la cerraron mientras calculaba
+    const { texto: _, bloqueados: __, reservados: ___, ...campos } = pedido;
+    destino.datos = datos; destino.pedido = campos;
+    guardarArboles();
+    if (activo === destino.id) mostrar(datos);
+    else avisar(`El árbol de ${esc(datos.especie)} ya está listo: tocá su pestaña para verlo.`);
+  } catch (err) {
+    if (!arboles.includes(destino)) return;
+    mostrarSiSigue(() => mostrarError(err.usuario ? err.message
+      : `No pude calcular el árbol (${err.message}). Probá recargar la página.`));
+  } finally {
+    clearInterval(relojId);
+    calculando.delete(destino.id); pintarPestanas();
+    btn.disabled = false; btn.textContent = "Calcular árbol";
+  }
+};
+
+// ---------- exportar el árbol como imagen ----------
+let libImagen;
+function cargarLibImagen() {
+  return libImagen ??= new Promise((ok, mal) => {
+    const sc = Object.assign(document.createElement("script"),
+      { src: "https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js" });
+    sc.onload = () => ok(window.htmlToImage);
+    sc.onerror = () => { libImagen = null; mal(new Error("sin internet")); };
+    document.head.append(sc);
+  });
+}
+async function imagenArbol() {
+  const lib = await cargarLibImagen();
+  const panel = $("panelArbol"), lienzo = $("lienzo");
+  panel.classList.add("exportando");
+  conectar(lienzo);  // las líneas se recalculan con el árbol entero a la vista
+  await new Promise(r => setTimeout(r, 50));
+  try {
+    const lado = Math.max(panel.scrollWidth, panel.scrollHeight);
+    return await lib.toBlob(panel, {
+      pixelRatio: Math.min(2, 15000 / lado),  // los navegadores no dibujan imágenes gigantes
+      backgroundColor: getComputedStyle(document.body).backgroundColor,
+      width: panel.scrollWidth, height: panel.scrollHeight,
+      style: { margin: "0", boxShadow: "none" },
+    });
+  } finally {
+    panel.classList.remove("exportando");
+    conectar(lienzo);
+  }
+}
+async function exportarArbol(copiar) {
+  const btn = $(copiar ? "copiarImagen" : "bajarImagen"), antes = btn.innerHTML;
+  btn.disabled = true; btn.innerHTML = `<span class="cargando"></span>${copiar ? "Copiando…" : "Armando…"}`;
+  try {
+    if (copiar) {
+      const ok = () => avisar(`${ICONO_IMAGEN} Árbol copiado como imagen: pegalo con Ctrl+V en Discord, WhatsApp, etc.`);
+      let fallo;
+      try {
+        // El blob se pasa como promesa para que el navegador no pierda el permiso del clic (Chrome, Safari).
+        await navigator.clipboard.write([new ClipboardItem({ "image/png": imagenArbol() })]);
+        return ok();
+      } catch (e) {
+        if (e.message === "sin internet") throw e;
+        fallo = e;
+      }
+      const blob = await imagenArbol();
+      try {
+        // Otros navegadores (Firefox) solo aceptan la imagen ya armada.
+        await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+        return ok();
+      } catch (e) {
+        // No dejan copiar desde la página: se muestra para copiarla con clic derecho.
+        return verImagen(blob, `${fallo.name}: ${fallo.message} / ${e.name}: ${e.message}`);
+      }
+    }
+    const blob = await imagenArbol();
+    const a = Object.assign(document.createElement("a"), {
+      href: URL.createObjectURL(blob), download: `arbol-${ultimo.especie.toLowerCase()}.png` });
+    a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    avisar(copiar ? "Tu navegador no deja copiar imágenes: la descargué como PNG." : "Árbol descargado como PNG.");
+  } catch (e) {
+    avisar(e.message === "sin internet" ? "Para armar la imagen hace falta internet (una vez)." : "No pude armar la imagen: " + esc(e.message));
+  } finally {
+    btn.disabled = false; btn.innerHTML = antes;
+  }
+}
+
+function verImagen(blob, error) {
+  const url = URL.createObjectURL(blob);
+  const v = document.createElement("div");
+  v.className = "vista-imagen";
+  v.innerHTML = `<div class="vista-barra"><b>Clic derecho en la imagen → <i>Copiar imagen</i></b>
+      <span class="ayuda">Tu navegador no me dejó copiarla solo.</span>
+      <a class="boton" href="${url}" download="arbol-${esc(ultimo.especie.toLowerCase())}.png">${ICONO_BAJAR} Descargar PNG</a>
+      <button type="button" class="cerrar-vista">Cerrar</button></div>
+    <img src="${url}" alt="Árbol de crianza de ${esc(ultimo.especie)}">
+    <div class="ayuda vista-error">Detalle: ${esc(error)}</div>`;
+  const cerrar = () => { v.remove(); URL.revokeObjectURL(url); document.removeEventListener("keydown", esc_); };
+  const esc_ = e => { if (e.key === "Escape") cerrar(); };
+  v.onclick = e => { if (e.target === v || e.target.closest(".cerrar-vista")) cerrar(); };
+  document.addEventListener("keydown", esc_);
+  document.body.append(v);
+}
+
+function mostrarError(msg) {
+  $("resultado").innerHTML = `<div class="panel vacio error">${esc(msg)}</div>`;
+}
+
+// ---------- piezas visuales ----------
+// Texto corto de IVs: "3x31: HP/Atk/Def · 0: Spe"
+const ivsTxt = (ivs, ceros = []) => [
+  ivs.length ? `${ivs.length}x31${ivs.length < 6 ? ": " + ivs.map(i => STATS[i]).join("/") : ""}` : "",
+  ceros.length ? "0: " + ceros.map(i => STATS[i]).join("/") : "",
+].filter(Boolean).join(" · ") || "sin 31";
+// Barra de 6 celdas: color lleno = 31, oscura con borde de color = 0
+const ivsBar = (ivs, ceros = []) => `<span class="ivs" title="${ivsTxt(ivs, ceros)}">${
+  STATS.map((_, i) => ivs.includes(i) ? `<i style="background:${COLOR[i]}"></i>`
+    : ceros.includes(i) ? `<i class="z" style="--c:${COLOR[i]}"></i>` : "<i></i>").join("")}</span>`;
+const genero = g => g ? `<span class="gen ${g}">${g === "M" ? "♂" : "♀"}</span>` : `<span class="gen">♀/♂</span>`;
+// Ícono "no usar": círculo tachado, toma el color del texto.
+const ICONO_BAN = `<svg class="icono-ban" viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" fill="none"
+  stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></svg>`;
+const ICONO_COPIAR = `<svg class="icono-copiar" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none"
+  stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="12" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h2"/></svg>`;
+const ICONO_IMAGEN = `<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor"
+  stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 9"/></svg>`;
+const ICONO_BAJAR = `<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor"
+  stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>`;
+const SPRITES = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/";
+const sprite = num => num > 0 ? `<img src="${SPRITES}${num}.png" alt="" onerror="this.remove()">` : "";
+
+cargarInventario();
+
+function cantidadMaquinas() {
+  const n = Math.floor(+$("maquinas").value);
+  return Number.isFinite(n) && n >= 1 ? Math.min(n, 30) : 1;
+}
+
+// Reparte los cruces en rondas. `libres(r)` dice cuántas máquinas hay libres en
+// la ronda r (puede ser 0 si están todas ocupadas con otra cosa). Un cruce puede
+// hacerse cuando ya nacieron sus padres. Se priorizan los cruces más lejos del
+// objetivo (algoritmo de Hu), que con cruces de igual duración da el mínimo de rondas.
+function armarRondas(pasos, libres) {
+  const hijo = {}, faltan = {};
+  for (const s of pasos) {
+    faltan[s.paso] = 0;
+    for (const x of s.padres) if (x.tipo === "cria") { hijo[x.paso] = s.paso; faltan[s.paso]++; }
+  }
+  const nivel = {};
+  const nivelDe = id => nivel[id] ??= (hijo[id] ? nivelDe(hijo[id]) + 1 : 1);
+  pasos.forEach(s => nivelDe(s.paso));
+
+  const orden = {};  // id del servidor -> { num, ronda, maquina }
+  let listos = pasos.filter(s => !faltan[s.paso]).map(s => s.paso);
+  let ronda = 0, num = 0;
+  while (listos.length) {
+    ronda++;
+    listos.sort((a, b) => nivel[b] - nivel[a] || a - b);
+    const cupo = libres(ronda);
+    const ahora = listos.slice(0, cupo);
+    listos = listos.slice(cupo);
+    ahora.forEach((id, i) => {
+      orden[id] = { num: ++num, ronda, maquina: i + 1 };
+      const h = hijo[id];
+      if (h && --faltan[h] === 0) listos.push(h);  // disponible desde la ronda siguiente
+    });
+  }
+  return { orden, rondas: ronda };
+}
+
+let avisoTimer;
+async function copiarFiltro(texto) {
+  if (!texto) return;
+  try {
+    await navigator.clipboard.writeText(texto);
+  } catch {
+    const t = Object.assign(document.createElement("textarea"), { value: texto });
+    document.body.append(t); t.select(); document.execCommand("copy"); t.remove();
+  }
+  avisar(`${ICONO_COPIAR} Filtro copiado, pegalo en el buscador de la caja:<br><code>${esc(texto)}</code>`);
+}
+function avisar(html) {
+  const a = $("aviso");
+  a.innerHTML = html;
+  a.classList.add("visible");
+  clearTimeout(avisoTimer); avisoTimer = setTimeout(() => a.classList.remove("visible"), 3500);
+}
+
+// Precios del servidor: cada Objeto Recio que se equipa y elegir el género del bebé.
+const PRECIO_RECIO = 500, PRECIO_GENERO = 500;
+const plata = n => "$" + n.toLocaleString("es-AR");
+function costoPaso(s) {
+  const recios = s.padres.filter(x => x.objeto?.tipo === "recio").length;
+  // Si la especie es de un solo género no hace falta pagar para elegirlo.
+  const genero = s.cria.genero && !s.cria.generoFijo ? 1 : 0;
+  return { recios, genero, total: recios * PRECIO_RECIO + genero * PRECIO_GENERO };
+}
+
+// Filtro para encontrar una cría ya nacida en la caja: especie, nivel 1 (recién
+// salida del huevo), género y UN IV garantizado, el que mejor la separe de las
+// otras crías de la misma especie y género del árbol.
+const FILTRO_STATS = ["hp", "attack", "defence", "special_attack", "special_defence", "speed"];
+let filtrosCria = {};  // id de paso -> filtro de la cría que nace en ese paso
+function armarFiltrosCria(pasos) {
+  const out = {};
+  const genes = c => [...c.ivs.map(i => [i, 31]), ...c.ceros.map(i => [i, 0])];
+  for (const s of pasos) {
+    const c = s.cria, g = c.genero || c.generoFijo;
+    const partes = [c.especie.toLowerCase().replace(/[^a-z0-9]/g, ""), "lvl=1"];
+    if (g) partes.push(g === "M" ? "male" : "female");
+    const otras = pasos.filter(t => t !== s && t.cria.especie === c.especie && (t.cria.genero || t.cria.generoFijo) === g);
+    const cand = genes(c).sort((a, b) =>
+      otras.filter(t => genes(t.cria).some(([i, v]) => i === a[0] && v === a[1])).length
+        - otras.filter(t => genes(t.cria).some(([i, v]) => i === b[0] && v === b[1])).length
+      || FILTRO_STATS[a[0]].length - FILTRO_STATS[b[0]].length);
+    if (cand.length) partes.push(`${FILTRO_STATS[cand[0][0]]}_iv=${cand[0][1]}`);
+    out[s.paso] = partes.join(" ");
+  }
+  return out;
+}
+
+function objetoTag(o) {
+  if (!o) return `<span class="tag" style="background:var(--soft);color:var(--muted)">Sin objeto</span>`;
+  if (o.tipo === "eterna") return `<span class="tag" style="background:var(--eterna);color:#fff">Piedra Eterna · naturaleza</span>`;
+  return o.valor === 0
+    ? `<span class="tag" data-c="${COLOR[o.stat]}" style="background:#1d2030;color:#fff;box-shadow:inset 0 0 0 2px ${COLOR[o.stat]}">${RECIO[o.stat]} · ${STATS[o.stat]} 0</span>`
+    : `<span class="tag" data-c="${COLOR[o.stat]}" style="background:${COLOR[o.stat]}">${RECIO[o.stat]} · ${STATS[o.stat]}</span>`;
+}
+
+// Texto del género. Las especies de un solo género (Petilil, Chansey...) salen
+// siempre así aunque el juego te deje elegir otro: no hace falta elegir nada.
+function generoTxt(x, esCria) {
+  if (x.generoFijo) return x.generoFijo === "F" ? "Siempre hembra" : "Siempre macho";
+  return x.genero === "M" ? "Macho" : x.genero === "F" ? "Hembra" : esCria ? "Cualquier género" : "Sin género";
+}
+
+function carta(n, rol, esRaiz, nat, orden, consume) {
+  const o = n.paso ? orden[n.paso] : null;
+  const pie = n.tipo === "pc"
+    ? `<span class="copiar-hint">${ICONO_COPIAR} Tocá para copiar filtro</span><span>${esc(n.naturaleza || "")}</span>`
+    : `<span class="paso-chip">Paso ${o.num}${maqActual > 1 ? ` · Ronda ${o.ronda} · Máq. ${o.maquina}` : ""}</span><span>${n.natured && nat ? esc(nat) : "nace"}</span>`;
+  return `<div class="carta ${n.tipo}${n.tipo === "pc" ? " copiable" : ""}${esRaiz ? " objetivo" : ""}${n.genero ? " g-" + n.genero : ""}" ${
+    n.paso ? `data-paso="${n.paso}"` : ""} ${consume ? `data-consume="${consume}"` : ""} ${n.filtro ? `data-filtro="${esc(n.filtro)}" title="Copiar filtro de búsqueda"` : ""}>
+    ${n.tipo === "pc" ? `<button type="button" class="vetar" data-clave="${esc(n.clave)}" title="No usar este Pokémon y recalcular" aria-label="No usar este Pokémon">${ICONO_BAN}</button>`
+      : `<button type="button" class="copiar-cria" data-filtro="${esc(filtrosCria[n.paso] || "")}" title="Copiar filtro para buscar esta cría" aria-label="Copiar filtro">${ICONO_COPIAR}</button>`}
+    <div class="rol">${rol ? rol + " · " : ""}<span class="gen-txt gen ${n.genero || n.generoFijo || ""}">${generoTxt(n, n.tipo === "cria")}</span></div>
+    <div class="cab">${sprite(n.num)}<span class="nom">${esc(n.especie)}</span>${genero(n.genero || n.generoFijo)}</div>
+    <div class="meta">${ivsBar(n.ivs, n.ceros)}<span>${n.ivs.length}x31${n.ceros.length ? " · " + n.ceros.length + "x0" : ""}</span></div>
+    <div class="meta">${pie}</div>
+    ${esRaiz ? "" : `<div class="lleva">${objetoTag(n.objeto)}</div>`}
+  </div>`;
+}
+
+// Tarjeta compacta para la lista de pasos (padres y cría).
+function mini(x, rol, orden, nat, esCria) {
+  const donde = esCria ? "" : x.tipo === "pc"
+    ? `📦 De tu PC${x.naturaleza ? " · " + esc(x.naturaleza) : ""} · ${ICONO_COPIAR} copiar filtro`
+    : `🥚 Cría del paso ${orden[x.paso].num} · ${ICONO_COPIAR} copiar filtro`;
+  const pie = esCria
+    ? `<span class="elegi ${x.genero || x.generoFijo || ""}">${x.generoFijo ? (x.generoFijo === "F" ? "Sale HEMBRA sí o sí" : "Sale MACHO sí o sí")
+        : x.genero === "M" ? "Elegí MACHO" : x.genero === "F" ? "Elegí HEMBRA" : "Cualquier género"}</span>${
+        x.natured && nat ? `<span class="donde">Naturaleza ${esc(nat)}</span>` : ""}<div class="donde">${ICONO_COPIAR} copiar filtro (nivel 1)</div>`
+    : objetoTag(x.objeto);
+  const filtro = x.tipo === "pc" ? x.filtro : filtrosCria[x.paso];
+  return `<div class="mini ${esCria ? "cria" : x.tipo}${x.genero ? " g-" + x.genero : ""}${filtro ? " copiable" : ""}" ${
+    filtro ? `data-filtro="${esc(filtro)}" title="Copiar filtro de búsqueda"` : ""}>
+    <div class="rol">${rol} · <span class="gen-txt gen ${x.genero || x.generoFijo || ""}">${generoTxt(x, esCria)}</span></div>
+    <div class="cab">${sprite(x.num)}<span class="nom">${esc(x.especie)}</span>${genero(x.genero || x.generoFijo)}</div>
+    <div class="ivlinea">${ivsBar(x.ivs, x.ceros)}<span>${ivsTxt(x.ivs, x.ceros)}</span></div>
+    ${donde ? `<div class="donde">${donde}</div>` : ""}
+    <div>${pie}</div>
+  </div>`;
+}
+
+// `consume`: paso en el que este Pokémon se usa como padre (para oscurecerlo cuando está hecho).
+function arbolHTML(n, rol, esRaiz, nat, orden, consume) {
+  if (n.tipo === "pc") return `<div class="sub">${carta(n, rol, esRaiz, nat, orden, consume)}</div>`;
+  const [r1, r2] = n.conDitto ? ["Pareja de Ditto", "Ditto"] : ["Madre", "Padre"];
+  return `<div class="sub"><div class="padres">${arbolHTML(n.padres[0], r1, false, nat, orden, n.paso)}${
+    arbolHTML(n.padres[1], r2, false, nat, orden, n.paso)}</div>${carta(n, rol, esRaiz, nat, orden, consume)}</div>`;
+}
+
+// Dibuja las curvas padre → cría midiendo dónde quedaron las cartas.
+function conectar(lienzo) {
+  lienzo.querySelector(":scope > svg.conexiones")?.remove();
+  const base = lienzo.getBoundingClientRect();
+  const sx = lienzo.scrollLeft, sy = lienzo.scrollTop;
+  let paths = "";
+  for (const sub of lienzo.querySelectorAll(".sub")) {
+    const hijo = sub.querySelector(":scope > .carta");
+    const padres = sub.querySelector(":scope > .padres");
+    if (!padres) continue;
+    const h = hijo.getBoundingClientRect();
+    const x2 = h.left - base.left + sx, y2 = h.top + h.height / 2 - base.top + sy;
+    for (const p of padres.querySelectorAll(":scope > .sub > .carta")) {
+      const r = p.getBoundingClientRect();
+      const x1 = r.right - base.left + sx, y1 = r.top + r.height / 2 - base.top + sy;
+      const tag = p.querySelector(".lleva .tag");
+      const color = tag?.dataset.c || tag?.style.background || "var(--line)";
+      const mx = (x1 + x2) / 2;
+      const opac = p.classList.contains("usado") ? 0.25 : 1;
+      paths += `<path d="M${x1} ${y1} C${mx} ${y1} ${mx} ${y2} ${x2} ${y2}" fill="none" stroke="${color}" stroke-opacity="${opac}" stroke-width="3" stroke-linecap="round"/>`;
+    }
+  }
+  lienzo.insertAdjacentHTML("afterbegin",
+    `<svg class="conexiones" width="${lienzo.scrollWidth}" height="${lienzo.scrollHeight}">${paths}</svg>`);
+}
+
+function mostrar(d) {
+  ultimo = d;
+  const inv = d.inventario;
+  const motivos = inv.motivos.map(([m, c]) => `${c} ${esc(m)}`).join(", ") || "ninguno";
+  if (!d.plan) {
+    const cortada = d.intentos.some(t => t.estado === "limite");
+    $("resultado").innerHTML = `<div class="panel vacio error">${cortada
+      ? `No encontré ninguna ruta para <b>${esc(d.especie)}</b> en el tiempo de búsqueda.<br>Lo más probable es que a tu PC le falten padres: probá con menos IVs o con una búsqueda más larga (paso 8).`
+      : `No hay ninguna ruta posible para <b>${esc(d.especie)}</b> con tu PC (${inv.utiles} Pokémon útiles).`}
+      ${d.faltantes?.length ? `<ul class="faltan">${d.faltantes.map(f => `<li>${esc(f)}</li>`).join("")}</ul>`
+        : `<br>Necesitás más padres con 31 en esos stats o más hembras de la línea de ${esc(d.familia)}.`}</div>`;
+    return;
+  }
+
+  const p = d.plan;
+  const maq = maqActual = cantidadMaquinas();
+  const clave = claveHechos(d);
+  // Máquinas libres por ronda (si alguna está ocupada con otra cosa). Sin dato = todas.
+  const claveLibres = "libres_" + clave;
+  const libresGuardadas = leer(claveLibres, {});
+  const libres = r => Math.min(maq, libresGuardadas[r] ?? maq);
+  const { orden, rondas } = armarRondas(p.pasos, libres);
+  const claveCerradas = "cerradas_" + clave;
+  const cerradas = new Set(leer(claveCerradas, []));
+  const pasosOrdenados = [...p.pasos].sort((a, b) => orden[a.paso].num - orden[b.paso].num);
+  const hechos = new Set(leer(clave, []));
+  filtrosCria = armarFiltrosCria(p.pasos);
+  const costos = Object.fromEntries(p.pasos.map(s => [s.paso, costoPaso(s)]));
+  const sumar = f => p.pasos.reduce((t, s) => t + f(costos[s.paso]), 0);
+  const totalPlata = sumar(c => c.total), totalRecios = sumar(c => c.recios), totalGeneros = sumar(c => c.genero);
+  const faltaPlata = () => p.pasos.filter(s => !hechos.has(s.paso)).reduce((t, s) => t + costos[s.paso].total, 0);
+  const objetos = {};
+  for (const paso of p.pasos) for (const pa of paso.padres) {
+    const o = pa.objeto; if (!o) continue;
+    const k = o.tipo === "eterna" ? "eterna" : `${o.stat}:${o.valor}`; objetos[k] = (objetos[k] || 0) + 1;
+  }
+  const leyenda = Object.keys(objetos).map(k => objetoTag(k === "eterna" ? { tipo: "eterna" }
+      : { tipo: "recio", stat: +k.split(":")[0], valor: +k.split(":")[1] }) +
+    `<span class="ayuda">×${objetos[k]} usos</span>`).join("");
+  // Objetos físicos que se usan en cada ronda (el mismo Recio sirve para 31 o 0).
+  const objsRonda = {};
+  for (const paso of p.pasos) {
+    const r = orden[paso.paso].ronda;
+    for (const pa of paso.padres) {
+      const o = pa.objeto; if (!o) continue;
+      const k = o.tipo === "eterna" ? "eterna" : o.stat;
+      (objsRonda[r] ??= {})[k] = (objsRonda[r][k] || 0) + 1;
+    }
+  }
+  const tagFisico = (k, n) => (k === "eterna"
+    ? `<span class="tag" style="background:var(--eterna);color:#fff">Piedra Eterna ×${n}</span>`
+    : `<span class="tag" style="background:${COLOR[k]}">${RECIO[k]} ×${n}</span>`);
+  const objsTxt = cuenta => Object.keys(cuenta).sort().map(k => tagFisico(k, cuenta[k])).join("");
+
+  $("resultado").innerHTML = `
+    <div class="resumen">
+      <div class="kpi"><b>${esc(d.especie)}</b><span>nace como ${esc(d.familia)} · ${d.gruposHuevo.map(esc).join(" / ")}</span></div>
+      <div class="kpi"><b>${p.ivs.length}x31${p.ceros.length ? ` + ${p.ceros.length}x0` : ""}</b><span>${ivsTxt(p.ivs, p.ceros)}${d.naturaleza ? " · " + esc(d.naturaleza) : ""}</span></div>
+      <div class="kpi"><b>${p.cruces}</b><span>cruces</span></div>
+      <div class="kpi"><b>${plata(totalPlata)}</b><span>${totalRecios} Objeto${totalRecios === 1 ? "" : "s"} Recio${totalRecios === 1 ? "" : "s"} y ${
+        totalGeneros} ${totalGeneros === 1 ? "elección" : "elecciones"} de género ($500 c/u)<span id="faltaPlata">${
+        faltaPlata() < totalPlata ? ` · te falta gastar ${plata(faltaPlata())}` : ""}</span></span></div>
+      <div class="kpi"><b>${rondas}</b><span>ronda${rondas === 1 ? "" : "s"} con ${maq} máquina${maq === 1 ? "" : "s"}</span></div>
+      <div class="kpi"><b>${p.costo}</b><span>costo total${p.optimo ? " · la ruta más barata" : " · no llegué a comprobar que sea la más barata (con 5-6 IVs es normal: hay demasiadas combinaciones). Una búsqueda más larga (paso 8) a veces la mejora un poco."}</span></div>
+      <div class="kpi"><b>${p.consumidos.length}</b><span>Pokémon del PC consumidos</span></div>
+      <div class="kpi"><b>${inv.utiles}</b><span>útiles en tu PC${inv.bloqueados ? ` · ${inv.bloqueados} bloqueados por vos` : ""}${
+        inv.reservados ? ` · ${inv.reservados} reservados por tus otros árboles` : ""} · descartados: ${motivos}</span></div>
+    </div>
+    <section class="panel" id="panelArbol">
+      <div class="titulo-arbol"><h2>Árbol de crianza · ${esc(d.especie)}</h2>
+        <button type="button" id="copiarImagen" title="Copiar el árbol entero como imagen, para pegarlo en Discord o WhatsApp">${ICONO_IMAGEN} Copiar imagen</button>
+        <button type="button" id="bajarImagen" title="Descargar el árbol entero como PNG">${ICONO_BAJAR} PNG</button></div>
+      <div class="solo-imagen">${ivsTxt(p.ivs, p.ceros)}${
+        d.naturaleza ? " · " + esc(d.naturaleza) : ""} · ${p.cruces} cruces · ${plata(totalPlata)}</div>
+      <div class="leyenda"><span class="ayuda">Objeto que lleva cada padre (el color de la línea indica cuál):</span>${leyenda}</div>
+      <div class="ayuda ayuda-arbol" style="margin-bottom:8px">Izquierda: Pokémon de tu PC (borde punteado): tocalos para copiar el filtro y buscarlos en la caja, o ${ICONO_BAN} para no usarlos. Derecha: tu objetivo. Tocá una cría para ver su paso o ${ICONO_COPIAR} para copiar su filtro. Lo que ya usaste en un paso hecho queda oscuro.</div>
+      <div class="lienzo" id="lienzo">${arbolHTML(p.arbol, "", true, d.naturaleza, orden)}</div>
+    </section>
+    <section class="panel">
+      <h2>Pasos en orden${maq > 1 ? ` <span class="ayuda">· ${rondas} rondas con ${maq} máquinas</span>` : ""}</h2>
+      <ol class="pasos">${Array.from({ length: rondas }, (_, k) => k + 1).map(r => {
+        const enRonda = pasosOrdenados.filter(t => orden[t.paso].ronda === r);
+        const cambiada = libresGuardadas[r] != null && libresGuardadas[r] < maq;
+        const completa = enRonda.length > 0 && enRonda.every(t => hechos.has(t.paso));
+        const cerrada = cerradas.has(r);
+        const cab = maq > 1 ? `<li class="ronda${enRonda.length ? "" : " vacia"}${cerrada ? " cerrada" : ""}${completa ? " completa" : ""}"
+            data-ronda="${r}" title="Tocá para ${cerrada ? "abrir" : "cerrar"} la ronda"><span class="flecha">▾</span><span class="ronda-titulo">Ronda ${r}${completa ? " ✓" : ""}</span>
+            <span class="ayuda">${enRonda.length} cruce${enRonda.length === 1 ? "" : "s"} a la vez</span>
+            ${enRonda.length ? `<span class="dinero">${plata(enRonda.reduce((t, s) => t + costos[s.paso].total, 0))}</span>` : ""}
+            <span class="ronda-objs">${objsTxt(objsRonda[r] || {})}</span>
+            <label class="libres${cambiada ? " cambiada" : ""}">Máquinas libres
+              <input type="number" min="0" max="${maq}" value="${libres(r)}" data-ronda="${r}"> de ${maq}</label></li>
+          ${enRonda.length ? "" : `<li class="sin-cruces${cerrada ? " oculto" : ""}" data-ronda="${r}">Sin máquinas libres: esta ronda se espera.</li>`}` : "";
+        return cab + enRonda.map(s => {
+        const o = orden[s.paso];
+        const [a, b] = s.padres;
+        const [r1, r2] = s.conDitto ? ["Pareja de Ditto", "Ditto"] : ["Madre", "Padre"];
+        const hecho = hechos.has(s.paso);
+        return `<li data-paso="${s.paso}" data-ronda="${o.ronda}" class="paso${hecho ? " hecho" : ""}${maq > 1 && cerradas.has(o.ronda) ? " oculto" : ""}">
+          <div class="paso-cab">
+            <input type="checkbox" ${hecho ? "checked" : ""} aria-label="Paso ${o.num} hecho">
+            <span class="paso-num">Paso ${o.num}</span>
+            <span class="dinero" title="${costos[s.paso].recios} Objeto(s) Recio(s)${costos[s.paso].genero ? " + elegir género" : ""}">${plata(costos[s.paso].total)}</span>
+            ${maq > 1 ? `<span class="maq-chip">Máquina ${o.maquina}</span>` : ""}
+            <span class="estado">${hecho ? "✓ Hecho" : "Tocá para marcar como hecho"}</span>
+          </div>
+          <div class="cruce">
+            ${mini(a, r1, orden, d.naturaleza)}<span class="op">✕</span>${mini(b, r2, orden, d.naturaleza)}
+            <span class="op">➜</span>${mini({ ...s.cria, tipo: "cria", paso: s.paso }, "Nace", orden, d.naturaleza, true)}
+          </div>
+        </li>`;
+        }).join("");
+      }).join("")}</ol>
+    </section>
+    <section class="panel">
+      <h2>Pokémon del PC que se usan</h2>
+      <table id="tablaConsumidos"><tr><th>Pokémon</th><th>IVs</th><th>Naturaleza</th><th></th></tr>
+      ${p.consumidos.map(c => `<tr><td>${esc(c.especie)} ${genero(c.genero)}</td>
+        <td>${ivsBar(c.ivs, c.ceros)} ${ivsTxt(c.ivs, c.ceros)}</td><td>${esc(c.naturaleza || "-")}</td>
+        <td><button type="button" class="copiar" data-filtro="${esc(c.filtro)}">${ICONO_COPIAR} Copiar filtro</button></td></tr>`).join("")}</table>
+    </section>
+`;
+
+  for (const inp of document.querySelectorAll(".libres input")) {
+    inp.onchange = () => {
+      const r = +inp.dataset.ronda, n = Math.max(0, Math.min(maq, Math.floor(+inp.value) || 0));
+      n === maq ? delete libresGuardadas[r] : (libresGuardadas[r] = n);
+      guardar(claveLibres, libresGuardadas);
+      mostrar(ultimo);
+      document.querySelector(`.libres input[data-ronda="${r}"]`)?.scrollIntoView({ block: "center" });
+    };
+  }
+  const pintarRonda = r => {
+    const cab = document.querySelector(`li.ronda[data-ronda="${r}"]`);
+    if (!cab) return;
+    const cerrada = cerradas.has(r);
+    cab.classList.toggle("cerrada", cerrada);
+    cab.title = `Tocá para ${cerrada ? "abrir" : "cerrar"} la ronda`;
+    for (const li of document.querySelectorAll(`ol.pasos li[data-ronda="${r}"]:not(.ronda)`)) li.classList.toggle("oculto", cerrada);
+  };
+  for (const cab of document.querySelectorAll("li.ronda")) {
+    cab.onclick = e => {
+      if (e.target.closest(".libres")) return;
+      const r = +cab.dataset.ronda;
+      cerradas.has(r) ? cerradas.delete(r) : cerradas.add(r);
+      guardar(claveCerradas, [...cerradas]);
+      pintarRonda(r);
+    };
+  }
+  $("tablaConsumidos").onclick = e => {
+    const b = e.target.closest("[data-filtro]"); if (b) copiarFiltro(b.dataset.filtro);
+  };
+  const lienzo = $("lienzo");
+  const marcar = () => {
+    for (const c of lienzo.querySelectorAll(".carta")) {
+      c.classList.toggle("usado", hechos.has(+c.dataset.consume));
+      c.classList.toggle("nacido", !!c.dataset.paso && hechos.has(+c.dataset.paso) && !hechos.has(+c.dataset.consume));
+    }
+    conectar(lienzo);
+  };
+  marcar();
+  requestAnimationFrame(() => conectar(lienzo));
+  new ResizeObserver(() => conectar(lienzo)).observe(lienzo);
+  lienzo.querySelectorAll("img").forEach(i => i.addEventListener("load", () => conectar(lienzo)));
+
+  for (const li of document.querySelectorAll("ol.pasos li[data-paso]")) {
+    li.onclick = e => {
+      const pc = e.target.closest("[data-filtro]");
+      if (pc) return copiarFiltro(pc.dataset.filtro);
+      const n = +li.dataset.paso, cb = li.querySelector("input");
+      if (e.target !== cb) cb.checked = !cb.checked;
+      cb.checked ? hechos.add(n) : hechos.delete(n);
+      li.classList.toggle("hecho", cb.checked);
+      li.querySelector(".estado").textContent = cb.checked ? "✓ Hecho" : "Tocá para marcar como hecho";
+      guardar(clave, [...hechos]); marcar(); pintarPestanas();
+      const r = +li.dataset.ronda, cab = document.querySelector(`li.ronda[data-ronda="${r}"]`);
+      if (cab) {
+        const pasosR = [...document.querySelectorAll(`ol.pasos li.paso[data-ronda="${r}"]`)];
+        const completa = pasosR.every(x => hechos.has(+x.dataset.paso));
+        cab.classList.toggle("completa", completa);
+        cab.querySelector(".ronda-titulo").textContent = `Ronda ${r}${completa ? " ✓" : ""}`;
+        if (completa && cb.checked) { cerradas.add(r); guardar(claveCerradas, [...cerradas]); pintarRonda(r); }
+      }
+      const f = faltaPlata();
+      $("faltaPlata").textContent = f < totalPlata ? ` · te falta gastar ${plata(f)}` : "";
+    };
+  }
+  $("copiarImagen").onclick = () => exportarArbol(true);
+  setTimeout(() => cargarLibImagen().catch(() => {}), 1000);
+  $("bajarImagen").onclick = () => exportarArbol(false);
+  lienzo.onclick = e => {
+    const v = e.target.closest(".vetar");
+    if (v) {
+      bloqueados.add(v.dataset.clave); guardarBloqueados(); pintarLista();
+      return $("form").requestSubmit();
+    }
+    const pc = e.target.closest(".copiar-cria, .carta.pc[data-filtro]");
+    if (pc) return copiarFiltro(pc.dataset.filtro);
+    const c = e.target.closest(".carta[data-paso]"); if (!c) return;
+    const li = document.querySelector(`ol.pasos li[data-paso="${c.dataset.paso}"]`);
+    li.scrollIntoView({ behavior: "smooth", block: "center" });
+    li.animate([{ background: "var(--soft)" }, { background: "transparent" }], { duration: 1200 });
+  };
+}
+</script>
+<script>abrirArbol(activo);</script>
+<div id="aviso" role="status" aria-live="polite"></div>
+</body>
+</html>

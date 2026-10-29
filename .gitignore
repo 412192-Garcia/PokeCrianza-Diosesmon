@@ -1,0 +1,11 @@
+# Versión vieja en Python (reemplazada por docs/motor) y el paquete para compartir
+criador_pokemon/
+PokeCrianza.zip
+
+# Cosas locales
+.claude/
+__pycache__/
+*.pyc
+
+# Exportaciones de PC propias (solo se suben los ejemplos)
+pc_export*.txt
