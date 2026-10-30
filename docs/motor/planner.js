@@ -331,27 +331,38 @@ export class Planner {
     }
   }
 
-  /**
-   * Devuelve la ruta más barata (o null si no hay).
-   * Si `optimal` queda en false, se acabó el tiempo antes de demostrar que no
-   * existe una más barata: la ruta es válida pero puede mejorarse.
-   */
-  solve(mask) {
-    const natured = this.nature !== null;
-    const root = new Req(mask, null, ["exact", this.targetFamily], natured);
+  /** Calcula las cotas para este objetivo (una sola vez) y devuelve su sub-objetivo raíz. */
+  preparar(mask) {
+    const root = new Req(mask, null, ["exact", this.targetFamily], this.nature !== null);
+    if (this.preparado === mask) return root;
+    this.preparado = mask;
     this.valueMask = MASK31 | (mask & MASK0);
     this.lbCache.clear();
-    this.deadline = performance.now() + this.timeLimit * 1000;
-
     this.dpBreeds = new CotaDP(this.dex, this.inv, mask, this.nature, this.allowDitto,
       p => this.leafCost(p, false), splits);
     this.dpCost = new CotaDP(this.dex, this.inv, mask, this.nature, this.allowDitto,
       p => this.leafCost(p, true), splits, this.pesoCruce);
     this.weighted = true;
+    return root;
+  }
+
+  /** Lo mínimo que puede costar este objetivo (INF si es imposible). */
+  cota(mask) { return this.bound(this.preparar(mask)); }
+
+  /**
+   * Devuelve la ruta más barata (o null si no hay).
+   * Si `optimal` queda en false, se acabó el tiempo antes de demostrar que no
+   * existe una más barata: la ruta es válida pero puede mejorarse.
+   * Con `tope`, solo interesa una ruta de costo menor a ese: si no hay, devuelve null.
+   */
+  solve(mask, tope = Infinity) {
+    const root = this.preparar(mask);
+    this.deadline = performance.now() + this.timeLimit * 1000;
     const budget = this.bound(root);
     if (budget >= INF) return null;  // ni reutilizando Pokémon se puede: imposible seguro
     // Gastar TODO el PC es el peor caso posible: cota superior del costo.
-    const upper = this.inv.reduce((t, p) => t + this.leafCost(p), 0) + this.inv.length * this.pesoCruce;
+    const upper = Math.min(tope - 1,
+      this.inv.reduce((t, p) => t + this.leafCost(p), 0) + this.inv.length * this.pesoCruce);
 
     let best = null;
     try {

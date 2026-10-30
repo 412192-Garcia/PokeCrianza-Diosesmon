@@ -1,7 +1,7 @@
 // Orquestación: parsea el PC, busca el árbol y lo devuelve como datos listos para la página.
 import { CotaDP, INF } from "./cotas.js";
 import { toId } from "./dex.js";
-import { EVERSTONE, Leaf, Breed, STATS, ZERO_SHIFT, geneStat, geneValue, ivs0, ivs31 } from "./model.js";
+import { EVERSTONE, Leaf, Breed, STATS, ZERO_SHIFT, bits, geneStat, geneValue, ivs0, ivs31 } from "./model.js";
 import { parseExport, stripForm } from "./parser.js";
 import { Planner, SearchLimit, countBreeds, leavesOf, splits } from "./planner.js";
 
@@ -256,19 +256,31 @@ export function planificar(dex, {
   // cuesta nada, así nunca se gasta un Pokémon con 31 en ese lugar.
   const inventarioPlan = [...parsed.pokemon, ...sinGenes.filter(p => dex.canBreed(p.species))];
 
+  // Con "cantidad" hay varias combinaciones de IVs: se prueban primero las que
+  // prometen ser más baratas, repartiendo el tiempo elegido entre todas.
+  const fin = performance.now() + segundos * 1000;
+  const candidatas = mascaras(stats, cantidad, ceros)
+    .map(mask => {
+      const planner = new Planner(dex, inventarioPlan, especie, { nature: naturaleza, allowDitto: usarDitto, pesoCruce });
+      return { mask, planner, cota: planner.cota(mask) };
+    })
+    .sort((a, b) => a.cota - b.cota);
+
   const intentos = [];
   let mejor = null;
-  for (const mask of mascaras(stats, cantidad, ceros)) {
+  for (const [i, { mask, planner }] of candidatas.entries()) {
+    const seg = Math.max(0.5, (fin - performance.now()) / 1000 / (candidatas.length - i));
     // 2/3 del tiempo para la búsqueda y 1/3 para mejorar la ruta rama por rama.
     // El tope de nodos crece con el tiempo, si no una búsqueda larga se cortaría antes.
-    const planner = new Planner(dex, inventarioPlan, especie, {
-      nature: naturaleza, allowDitto: usarDitto, maxNodes: Math.floor(maxNodos * Math.max(1, segundos / 30)),
-      timeLimit: segundos * 2 / 3, improveTime: segundos / 3, pesoCruce,
-    });
+    planner.maxNodes = Math.floor(maxNodos * Math.max(1, seg / 30));
+    planner.timeLimit = seg * 2 / 3;
+    planner.improveTime = seg / 3;
+    // Ya hay una ruta: de las demás solo interesa una más barata (si el costo se mide igual).
+    const tope = mejor !== null && pesoEval === pesoCruce ? mejor[1].cost : Infinity;
     let plan = null, estado;
     try {
-      plan = planner.solve(mask);
-      estado = plan ? "ok" : "imposible";
+      plan = planner.solve(mask, tope);
+      estado = plan ? "ok" : tope < Infinity ? "no-mejora" : "imposible";
     } catch (e) {
       if (!(e instanceof SearchLimit)) throw e;
       estado = "limite";
@@ -287,15 +299,26 @@ export function planificar(dex, {
 
   const out = {
     especie, familia, gruposHuevo: gruposEs(dex, familia), naturaleza, inventario: resumen, intentos, plan: null,
-    generoFijo: generoFijo(dex, familia),
+    generoFijo: generoFijo(dex, familia), combinaciones: candidatas.length,
   };
   if (mejor === null) {
     const apartadas = todos.filter(p => vetados.has(clave(p)) && p.gender === "F" && dex.family(p.species) === familia).length;
-    out.faltantes = diagnostico(dex, inventarioPlan, especie, mascaras(stats, cantidad, ceros)[0], naturaleza, usarDitto, apartadas);
+    // Con varias combinaciones, se explica la que estuvo más cerca de ser posible:
+    // la que tiene menos IVs imposibles (y, a igualdad, la de menor cota).
+    const imposibles = c => bits(c.mask)
+      .filter(g => c.planner.dpCost.bound(1 << g, false, null, ["exact", familia], false) >= INF).length;
+    const cercana = candidatas.reduce((m, c) => (imposibles(c) < imposibles(m) ? c : m)).mask;
+    out.faltantes = diagnostico(dex, inventarioPlan, especie, cercana, naturaleza, usarDitto, apartadas);
+    if (candidatas.length > 1) {
+      out.faltantes.unshift(`Probé las ${candidatas.length} combinaciones de ${ivs31(cercana).length}x31 y ninguna se puede. ` +
+        `La más cercana es ${ivs31(cercana).map(i => STATS[i]).join("/")}:`);
+    }
     return out;
   }
 
-  const [mask, plan, optimo] = mejor;
+  const [mask, plan] = mejor;
+  // Solo es "la más barata" si también se descartaron de verdad las otras combinaciones.
+  const optimo = intentos.every(t => t.optimo);
   const pasos = numberSteps(plan);
   const hojas = leavesOf(plan);
   out.plan = {

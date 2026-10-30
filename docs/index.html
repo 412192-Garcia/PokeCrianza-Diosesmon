@@ -71,6 +71,10 @@
   details summary { cursor: pointer; color: var(--muted); font-size: 12px; margin-top: 6px; }
   textarea { height: 140px; margin-top: 6px; font: 12px/1.4 ui-monospace, Consolas, monospace; }
   .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .stats[hidden], #bloqueCantidad[hidden] { display: none; }
+  .modo-iv { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px; }
+  .modo-iv button { padding: 6px; font-size: 12px; }
+  .modo-iv button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
   select.iv { width: 100%; min-width: 0; padding: 7px 6px; font-size: 13px; font-weight: 700;
     border-left: 5px solid var(--c); cursor: pointer; }
   select.iv.v31 { background: var(--c); color: #1d2030; border-color: var(--c); }
@@ -281,7 +285,18 @@
     <datalist id="especies"></datalist>
 
     <label class="campo">3. IVs que querés <span class="ayuda">(— = da igual)</span></label>
+    <div class="modo-iv" id="modoIv">
+      <button type="button" data-modo="elegir" aria-pressed="true" title="Vos decís qué IVs">Elegir cuáles</button>
+      <button type="button" data-modo="cantidad" aria-pressed="false" title="Para misiones: solo importa cuántos IVs en 31">Por cantidad</button>
+    </div>
     <div class="stats" id="stats"></div>
+    <div id="bloqueCantidad" hidden>
+      <select id="cantidadIv">
+        <option value="1">1x31</option><option value="2">2x31</option><option value="3">3x31</option>
+        <option value="4">4x31</option><option value="5">5x31</option><option value="6">6x31</option>
+      </select>
+      <span class="ayuda">Prueba todas las combinaciones de IVs y se queda con la más barata.</span>
+    </div>
 
     <label class="campo" for="naturaleza">4. Naturaleza <span class="ayuda">(opcional, usa Piedra Eterna)</span></label>
     <select id="naturaleza"><option value="">Cualquiera</option></select>
@@ -362,6 +377,17 @@ $("stats").innerHTML = STATS.map((s, i) =>
     <option value="">${s} · —</option><option value="31">${s} · 31</option><option value="0">${s} · 0</option></select>`).join("");
 const pintarIv = sel => { sel.classList.toggle("v31", sel.value === "31"); sel.classList.toggle("v0", sel.value === "0"); };
 $("stats").onchange = e => pintarIv(e.target);
+let modoIv = "elegir";
+function ponerModoIv(m) {
+  modoIv = m === "cantidad" ? "cantidad" : "elegir";
+  for (const b of $("modoIv").querySelectorAll("button")) b.setAttribute("aria-pressed", String(b.dataset.modo === modoIv));
+  $("stats").hidden = modoIv === "cantidad";
+  $("bloqueCantidad").hidden = modoIv !== "cantidad";
+}
+$("modoIv").onclick = e => { const b = e.target.closest("button"); if (b) { ponerModoIv(b.dataset.modo); guardar("modoIv", modoIv); } };
+$("cantidadIv").value = String(leer("cantidadIv", 4));
+$("cantidadIv").onchange = () => guardar("cantidadIv", +$("cantidadIv").value);
+ponerModoIv(leer("modoIv", "elegir"));
 const elegidos = v => [...$("stats").querySelectorAll("select.iv")].filter(x => x.value === v).map(x => x.dataset.stat);
 motor.then(m => m.especies()).then(l => {
   $("especies").innerHTML = l.map(n => `<option value="${esc(n)}">`).join("");
@@ -470,6 +496,8 @@ function restaurarPedido(pd) {
   $("ditto").checked = pd.usarDitto !== false;
   if (pd.segundos) $("tiempo").value = String(pd.segundos);
   if (pd.pesoCruce) $("prioridad").value = String(pd.pesoCruce);
+  ponerModoIv(pd.cantidad ? "cantidad" : "elegir");
+  if (pd.cantidad) $("cantidadIv").value = String(pd.cantidad);
   for (const sel of $("stats").querySelectorAll("select.iv")) {
     sel.value = pd.stats.includes(sel.dataset.stat) ? "31" : pd.ceros.includes(sel.dataset.stat) ? "0" : "";
     pintarIv(sel);
@@ -531,11 +559,12 @@ $("form").onsubmit = async e => {
   e.preventDefault();
   const texto = $("texto").value;
   if (!texto.trim()) return mostrarError("Primero cargá el archivo del PC.");
-  const stats = elegidos("31"), ceros = elegidos("0");
-  if (!stats.length && !ceros.length) return mostrarError("Marcá al menos un IV que quieras en 31 o en 0.");
+  const porCantidad = modoIv === "cantidad";
+  const stats = porCantidad ? [] : elegidos("31"), ceros = porCantidad ? [] : elegidos("0");
+  if (!porCantidad && !stats.length && !ceros.length) return mostrarError("Marcá al menos un IV que quieras en 31 o en 0.");
   const pedido = {
     texto, objetivo: $("objetivo").value, naturaleza: $("naturaleza").value,
-    stats, ceros, cantidad: null,
+    stats, ceros, cantidad: porCantidad ? +$("cantidadIv").value : null,
     usarDitto: $("ditto").checked,
     segundos: +$("tiempo").value,
     pesoCruce: +$("prioridad").value,
@@ -924,7 +953,7 @@ function mostrar(d) {
   $("resultado").innerHTML = `
     <div class="resumen">
       <div class="kpi"><b>${esc(d.especie)}</b><span>nace como ${esc(d.familia)} · ${d.gruposHuevo.map(esc).join(" / ")}</span></div>
-      <div class="kpi"><b>${p.ivs.length}x31${p.ceros.length ? ` + ${p.ceros.length}x0` : ""}</b><span>${ivsTxt(p.ivs, p.ceros)}${d.naturaleza ? " · " + esc(d.naturaleza) : ""}</span></div>
+      <div class="kpi"><b>${p.ivs.length}x31${p.ceros.length ? ` + ${p.ceros.length}x0` : ""}</b><span>${ivsTxt(p.ivs, p.ceros)}${d.combinaciones > 1 ? ` · la más barata de ${d.combinaciones} combinaciones` : ""}${d.naturaleza ? " · " + esc(d.naturaleza) : ""}</span></div>
       <div class="kpi"><b>${p.cruces}</b><span>cruces</span></div>
       <div class="kpi"><b>${plata(totalPlata)}</b><span>${totalRecios} Objeto${totalRecios === 1 ? "" : "s"} Recio${totalRecios === 1 ? "" : "s"} y ${
         totalGeneros} ${totalGeneros === 1 ? "elección" : "elecciones"} de género ($500 c/u)<span id="faltaPlata">${
