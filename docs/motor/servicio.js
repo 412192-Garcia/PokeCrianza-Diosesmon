@@ -110,6 +110,7 @@ function nodo(dex, n, fil, item = null) {
   const base = {
     especie: n.species, num: dex.entry(n.species).num, genero: n.gender, ivs: ivs31(n.mask), ceros: ivs0(n.mask),
     natured: n.natured, objeto: objeto(item), generoFijo: generoFijo(dex, n.species),
+    sinGenero: dex.genderPolicy(n.species) === "N",
   };
   if (n instanceof Leaf) {
     const p = n.mon;
@@ -152,9 +153,11 @@ export function diagnostico(dex, pokemon, especie, mask, naturaleza, usarDitto, 
   const pol = dex.genderPolicy(fam);
   const out = [];
 
-  if ((pol === "M" || pol === "N") && !dittos.length) {
+  if (pol === "M" && !dittos.length) {
     out.push(`${fam} no tiene hembras: solo se cría con un Ditto. Conseguí un Ditto.`);
-  } else if (!linea.some(p => p.gender === "F") && !dittos.length) {
+  } else if (pol === "N" && !linea.length) {
+    out.push(`No tenés ningún Pokémon de la línea de ${fam}: hace falta uno para que nazca ${fam}.`);
+  } else if (!linea.some(p => p.gender === "F" || p.gender === null) && !dittos.length) {
     const extra = apartadas
       ? ` Tenés ${apartadas} hembra${apartadas > 1 ? "s" : ""} de ${fam}, pero ${
         apartadas > 1 ? "las bloqueaste o las usan" : "la bloqueaste o la usa"} otro árbol abierto.`
@@ -179,7 +182,7 @@ export function diagnostico(dex, pokemon, especie, mask, naturaleza, usarDitto, 
     if (sinMadre) break;
     if (dp.bound(1 << g, false, null, ["exact", fam], false) >= INF) {
       out.push(`Nadie puede pasarle ${genTxt(g)} a ${fam}: conseguí un Pokémon con ${genTxt(g)} ` +
-        `del grupo huevo ${grupos} (o una ${fam} hembra con ese IV).`);
+        `del grupo huevo ${grupos} (o ${pol === "N" ? `un ${fam}` : `una ${fam} hembra`} con ese IV).`);
     } else if (n <= 1) {
       out.push(`Solo tenés ${n} Pokémon compatible con ${genTxt(g)}: con uno más hay más caminos.`);
     }
@@ -307,7 +310,7 @@ export function planificar(dex, {
       // Los padres van sin su sub-árbol: ya están completos en `arbol`.
       padres: [nodo(dex, b.p1, fil, b.item1), nodo(dex, b.p2, fil, b.item2)].map(({ padres, ...resto }) => resto),
       cria: { especie: b.species, num: dex.entry(b.species).num, genero: b.gender, generoFijo: generoFijo(dex, b.species),
-        ivs: ivs31(b.mask), ceros: ivs0(b.mask), natured: b.natured },
+        sinGenero: dex.genderPolicy(b.species) === "N", ivs: ivs31(b.mask), ceros: ivs0(b.mask), natured: b.natured },
       conDitto: b.withDitto,
     })),
     consumidos: [...hojas].sort((a, b) => a.mon.uid - b.mon.uid).map(h => ({

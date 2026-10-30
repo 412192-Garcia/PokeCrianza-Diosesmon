@@ -53,5 +53,9 @@ consumido, donde uno con k IVs útiles vale 2^(k-1) (1x31 = 1, 2x31 = 2, 3x31 = 
 no vale nada. El peso del cruce sale de la opción "Prioridad" (Menos cruces = 4, Equilibrado = 2,
 Cuidar mis Pokémon = 1).
 
+Regla de este server: un Pokémon sin género (Golurk, Magnemite...) cumple el género que falta, siempre que
+compartan grupo huevo. Con un macho hace de madre (nace su especie, sin género), con una hembra hace de padre
+(nace la de ella) y, si los dos son sin género, se elige quién hace de cada uno.
+
 Supuestos: se puede elegir el género de la cría pagando. Los bebés (Pichu, Happiny...) se saltan: la cría
 se toma como la primera forma que puede criar. Casos especiales como Nidoran♀→♂ o Volbeat/Illumise no se modelan.

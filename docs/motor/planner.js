@@ -3,6 +3,9 @@
 // Algoritmo: profundización iterativa sobre el COSTO + backtracking con
 // generadores + cota inferior admisible.
 //
+// * Regla de este server: un Pokémon sin género cumple el género que falta. Con
+//   un macho hace de madre (nace su especie), con una hembra hace de padre (nace
+//   la de ella), y si los dos son sin género se elige quién hace de cada uno.
 // * Cada sub-objetivo es un `Req`: "necesito un Pokémon con estos genes, este
 //   género, cuya especie cumpla esta restricción (y quizá la naturaleza)".
 // * `gen(req, budget)` es un generador que va PRODUCIENDO planes válidos que
@@ -138,7 +141,7 @@ export class Planner {
   genderPossible(family, gender) {
     if (gender === null) return true;
     const pol = this.dex.genderPolicy(family);
-    return pol === null || pol === gender;
+    return pol === null || pol === gender || pol === "N";  // el sin género cumple cualquiera
   }
 
   /** Costo de un cruce: su peso al buscar la más barata, 1 al contar cruces. */
@@ -196,7 +199,8 @@ export class Planner {
         if (!this.dex.isDitto(p.species)) continue;
       } else {
         if (this.dex.isDitto(p.species)) continue;
-        if (req.gender !== null && p.gender !== req.gender) continue;
+        // Un sin género (acá ya no es un Ditto) cumple el género que falte.
+        if (req.gender !== null && p.gender !== null && p.gender !== req.gender) continue;
         if (!this.satisfies(p.species, req.cons)) continue;
       }
       // Individuos equivalentes son intercambiables: probar solo uno por clase.
@@ -283,7 +287,7 @@ export class Planner {
           let childMask = p1.mask & p2.mask;
           for (const it of [i1, i2]) if (typeof it === "number") childMask |= 1 << it;
           yield new Breed({
-            species: fam, gender: req.gender, mask: childMask, natured: req.natured, p1, p2,
+            species: fam, gender: this.dex.genderPolicy(fam) === "N" ? null : req.gender, mask: childMask, natured: req.natured, p1, p2,
             item1: i1, item2: i2, withDitto, cost: cruce + p1.cost + p2.cost, req,
           });
         }

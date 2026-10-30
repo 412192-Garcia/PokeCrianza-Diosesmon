@@ -397,7 +397,7 @@ function pintarLista() {
   $("listaPc").innerHTML = filas.map(p => `<div class="fila-pc ${bloqueados.has(p.clave) ? "vetado" : ""} ${p.genero ? "g-" + p.genero : ""}" data-clave="${esc(p.clave)}"
       title="${bloqueados.has(p.clave) ? "Bloqueado: tocá para volver a usarlo" : "Tocá para no usarlo"}">
       <span class="ban">${ICONO_BAN}</span>${p.num > 0 ? `<img src="${SPRITES}${p.num}.png" alt="" onerror="this.remove()">` : ""}
-      <span class="nom">${esc(p.especie)} ${genero(p.genero)} <span class="ayuda">${esc(p.naturaleza || "")}</span></span>
+      <span class="nom">${esc(p.especie)} ${p.genero ? genero(p.genero) : SIN_GENERO} <span class="ayuda">${esc(p.naturaleza || "")}</span></span>
       ${ivsBar(p.ivs, p.ceros)}</div>`).join("");
   const n = pcInventario.filter(p => bloqueados.has(p.clave)).length;
   $("cuentaBloq").textContent = n ? `${n} bloqueado${n > 1 ? "s" : ""}` : "Ninguno bloqueado";
@@ -673,6 +673,8 @@ const ivsTxt = (ivs, ceros = []) => [
 const ivsBar = (ivs, ceros = []) => `<span class="ivs" title="${ivsTxt(ivs, ceros)}">${
   STATS.map((_, i) => ivs.includes(i) ? `<i style="background:${COLOR[i]}"></i>`
     : ceros.includes(i) ? `<i class="z" style="--c:${COLOR[i]}"></i>` : "<i></i>").join("")}</span>`;
+const SIN_GENERO = `<span class="gen" title="Sin género">⚲</span>`;
+const simboloGenero = x => x.sinGenero ? SIN_GENERO : genero(x.genero || x.generoFijo);
 const genero = g => g ? `<span class="gen ${g}">${g === "M" ? "♂" : "♀"}</span>` : `<span class="gen">♀/♂</span>`;
 // Ícono "no usar": círculo tachado, toma el color del texto.
 const ICONO_BAN = `<svg class="icono-ban" viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" fill="none"
@@ -787,6 +789,7 @@ function objetoTag(o) {
 // Texto del género. Las especies de un solo género (Petilil, Chansey...) salen
 // siempre así aunque el juego te deje elegir otro: no hace falta elegir nada.
 function generoTxt(x, esCria) {
+  if (x.sinGenero) return "Sin género";
   if (x.generoFijo) return x.generoFijo === "F" ? "Siempre hembra" : "Siempre macho";
   return x.genero === "M" ? "Macho" : x.genero === "F" ? "Hembra" : esCria ? "Cualquier género" : "Sin género";
 }
@@ -801,7 +804,7 @@ function carta(n, rol, esRaiz, nat, orden, consume) {
     ${n.tipo === "pc" ? `<button type="button" class="vetar" data-clave="${esc(n.clave)}" title="No usar este Pokémon y recalcular" aria-label="No usar este Pokémon">${ICONO_BAN}</button>`
       : `<button type="button" class="copiar-cria" data-filtro="${esc(filtrosCria[n.paso] || "")}" title="Copiar filtro para buscar esta cría" aria-label="Copiar filtro">${ICONO_COPIAR}</button>`}
     <div class="rol">${rol ? rol + " · " : ""}<span class="gen-txt gen ${n.genero || n.generoFijo || ""}">${generoTxt(n, n.tipo === "cria")}</span></div>
-    <div class="cab">${sprite(n.num)}<span class="nom">${esc(n.especie)}</span>${genero(n.genero || n.generoFijo)}</div>
+    <div class="cab">${sprite(n.num)}<span class="nom">${esc(n.especie)}</span>${simboloGenero(n)}</div>
     <div class="meta">${ivsBar(n.ivs, n.ceros)}<span>${n.ivs.length}x31${n.ceros.length ? " · " + n.ceros.length + "x0" : ""}</span></div>
     <div class="meta">${pie}</div>
     ${esRaiz ? "" : `<div class="lleva">${objetoTag(n.objeto)}</div>`}
@@ -814,7 +817,7 @@ function mini(x, rol, orden, nat, esCria) {
     ? `📦 De tu PC${x.naturaleza ? " · " + esc(x.naturaleza) : ""} · ${ICONO_COPIAR} copiar filtro`
     : `🥚 Cría del paso ${orden[x.paso].num} · ${ICONO_COPIAR} copiar filtro`;
   const pie = esCria
-    ? `<span class="elegi ${x.genero || x.generoFijo || ""}">${x.generoFijo ? (x.generoFijo === "F" ? "Sale HEMBRA sí o sí" : "Sale MACHO sí o sí")
+    ? `<span class="elegi ${x.genero || x.generoFijo || ""}">${x.sinGenero ? "Sale sin género" : x.generoFijo ? (x.generoFijo === "F" ? "Sale HEMBRA sí o sí" : "Sale MACHO sí o sí")
         : x.genero === "M" ? "Elegí MACHO" : x.genero === "F" ? "Elegí HEMBRA" : "Cualquier género"}</span>${
         x.natured && nat ? `<span class="donde">Naturaleza ${esc(nat)}</span>` : ""}<div class="donde">${ICONO_COPIAR} copiar filtro (nivel 1)</div>`
     : objetoTag(x.objeto);
@@ -822,9 +825,10 @@ function mini(x, rol, orden, nat, esCria) {
   return `<div class="mini ${esCria ? "cria" : x.tipo}${x.genero ? " g-" + x.genero : ""}${filtro ? " copiable" : ""}" ${
     filtro ? `data-filtro="${esc(filtro)}" title="Copiar filtro de búsqueda"` : ""}>
     <div class="rol">${rol} · <span class="gen-txt gen ${x.genero || x.generoFijo || ""}">${generoTxt(x, esCria)}</span></div>
-    <div class="cab">${sprite(x.num)}<span class="nom">${esc(x.especie)}</span>${genero(x.genero || x.generoFijo)}</div>
+    <div class="cab">${sprite(x.num)}<span class="nom">${esc(x.especie)}</span>${simboloGenero(x)}</div>
     <div class="ivlinea">${ivsBar(x.ivs, x.ceros)}<span>${ivsTxt(x.ivs, x.ceros)}</span></div>
     ${donde ? `<div class="donde">${donde}</div>` : ""}
+    ${!esCria && x.sinGenero && (rol === "Madre" || rol === "Padre") ? `<div class="donde"><b>Hace de ${rol.toLowerCase()}</b></div>` : ""}
     <div>${pie}</div>
   </div>`;
 }
@@ -980,7 +984,7 @@ function mostrar(d) {
     <section class="panel">
       <h2>Pokémon del PC que se usan</h2>
       <table id="tablaConsumidos"><tr><th>Pokémon</th><th>IVs</th><th>Naturaleza</th><th></th></tr>
-      ${p.consumidos.map(c => `<tr><td>${esc(c.especie)} ${genero(c.genero)}</td>
+      ${p.consumidos.map(c => `<tr><td>${esc(c.especie)} ${c.genero ? genero(c.genero) : SIN_GENERO}</td>
         <td>${ivsBar(c.ivs, c.ceros)} ${ivsTxt(c.ivs, c.ceros)}</td><td>${esc(c.naturaleza || "-")}</td>
         <td><button type="button" class="copiar" data-filtro="${esc(c.filtro)}">${ICONO_COPIAR} Copiar filtro</button></td></tr>`).join("")}</table>
     </section>

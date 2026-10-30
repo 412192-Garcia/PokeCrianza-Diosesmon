@@ -80,11 +80,15 @@ export class CotaDP {
   kd(mask, nat) { return mask * 2 + (nat ? 1 : 0); }
   getV(k) { return this.v.get(k) ?? INF; }
   getD(k) { return this.ditto.get(k) ?? INF; }
+  /** Costo de cumplir el género `gi` (F o M): un sin género cumple cualquiera. */
+  conGenero(mask, nat, gi, fi) {
+    return Math.min(this.getV(this.kv(mask, nat, gi, fi)), this.getV(this.kv(mask, nat, GI.N, fi)));
+  }
 
   childGenders(fam, normal) {
     const pol = this.dex.genderPolicy(fam);
     if (pol === null) return ["F", "M"];
-    if (normal && pol !== "F") return [];  // sin hembras: solo puede venir de un cruce con Ditto
+    if (normal && pol === "M") return [];  // solo machos: solo puede venir de un cruce con Ditto
     return [pol];
   }
 
@@ -102,7 +106,7 @@ export class CotaDP {
     let r = INF;
     for (const h of this.compatIdx[fi]) {
       if (gender === null) r = Math.min(r, this.anyGender(mask, nat, h));
-      else r = Math.min(r, this.getV(this.kv(mask, nat, GI[gender], h)));
+      else r = Math.min(r, this.conGenero(mask, nat, GI[gender], h));
     }
     if (this.frozen) this.memo.set(key, r);
     return r;
@@ -114,7 +118,7 @@ export class CotaDP {
       for (const [[m1, , n1], [m2, , n2]] of [[specA, specB], [specB, specA]]) {
         for (let fi = 0; fi < this.nF; fi++) {
           const fam = this.families[fi];
-          const mother = this.getV(this.kv(m1, n1, 0, fi));
+          const mother = this.conGenero(m1, n1, GI.F, fi);
           if (mother < INF) {
             const c = this.breedCost + mother + this.compatCost(m2, n2, "M", fi);
             for (const g of this.childGenders(fam, true)) {
@@ -149,7 +153,7 @@ export class CotaDP {
     const fi = this.famIdx.get(cons[1]);
     if (fi === undefined) return INF;
     if (cons[0] === "exact") {
-      return gender === null ? this.anyGender(mask, nat, fi) : this.getV(this.kv(mask, nat, GI[gender], fi));
+      return gender === null ? this.anyGender(mask, nat, fi) : this.conGenero(mask, nat, GI[gender], fi);
     }
     return this.compatCost(mask, nat, gender, fi);
   }
